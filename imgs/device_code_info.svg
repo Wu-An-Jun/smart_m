@@ -1,0 +1,18 @@
+
+<svg mexport="1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="0 0 24 24">
+	<defs>
+		<clipPath id="clipPath1802:6189:0">
+			<path d="M0 0L24 0L24 24L0 24L0 0Z" fill-rule="nonzero" transform="matrix(1 0 0 1 0 0)"/>
+		</clipPath>
+	</defs>
+	<g clip-path="url(#clipPath1802:6189:0)">
+		<defs>
+			<mask id="mask1802:6189:1" style="mask-type:alpha">
+				<path d="M0 0L24 0L24 24L0 24L0 0Z" fill-rule="nonzero" transform="matrix(1 0 0 1 0 0)" fill="rgb(0, 0, 0)"/>
+			</mask>
+		</defs>
+		<g mask="url(#mask1802:6189:1)">
+			<path d="M8.6705 0.329501C8.23116 -0.109834 7.51884 -0.109834 7.0795 0.329501L0.329505 7.0795C0.224016 7.18499 0.142727 7.30665 0.08564 7.44448C0.0285466 7.5823 0 7.72581 0 7.875C0 8.02418 0.0285466 8.16769 0.08564 8.30552C0.142727 8.44334 0.224016 8.565 0.329505 8.6705L7.0795 15.4205C7.51884 15.8598 8.23116 15.8598 8.6705 15.4205C9.10983 14.9812 9.10983 14.2688 8.6705 13.8295L2.71599 7.875L8.6705 1.92049C9.10983 1.48116 9.10983 0.768837 8.6705 0.329501Z" fill-rule="evenodd" transform="matrix(1 0 0 1 7.5 4.125)" fill="rgb(55, 65, 81)"/>
+		</g>
+	</g>
+</svg>
