@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+
 import '../common/Global.dart';
-import '../models/device_model.dart';
 import '../controllers/device_controller.dart';
+import '../models/device_model.dart';
 import '../routes/app_routes.dart';
 import '../routes/geofence_management_page.dart';
+import '../views/add_device_view.dart';
 import '../widgets/center_popup.dart';
 import '../widgets/geofence_map_widget.dart';
 import '../widgets/more_settings_dialog.dart';
 import '../widgets/positioning_mode_selector.dart';
-import '../views/add_device_view.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 
 class DeviceManagementPage extends StatefulWidget {
   const DeviceManagementPage({super.key});
@@ -165,13 +166,20 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
 
   /// 弹出重命名设备对话框
   void _showRenameDeviceDialog(DeviceModel device) {
-    final TextEditingController nameController = TextEditingController(text: device.name);
+    final TextEditingController nameController = TextEditingController(
+      text: device.name,
+    );
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: const Text('重命名设备', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            '重命名设备',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: TextField(
             controller: nameController,
             decoration: const InputDecoration(
@@ -189,7 +197,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
               onPressed: () async {
                 final newName = nameController.text.trim();
                 if (newName.isEmpty) {
-                  Get.snackbar('错误', '设备名称不能为空', backgroundColor: Colors.red.shade100, colorText: Colors.red);
+                  Get.snackbar(
+                    '错误',
+                    '设备名称不能为空',
+                    backgroundColor: Colors.red.shade100,
+                    colorText: Colors.red,
+                  );
                   return;
                 }
                 final updatedDevice = device.copyWith(name: newName);
@@ -199,7 +212,9 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Global.currentTheme.primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('保存'),
             ),
@@ -464,45 +479,6 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
         ),
         child: Column(
           children: [
-            // 状态栏
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${device.name} ${device.type == DeviceType.petTracker ? "定位器" : ""}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.wifi,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.signal_cellular_alt,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        _getBatteryIcon(device),
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            
             // 设备信息行
             Padding(
               padding: const EdgeInsets.all(16),
@@ -544,9 +520,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                           builder: (context, snapshot) {
                             return Text(
                               snapshot.data ?? device.description ?? '获取位置中...',
-                              style: const TextStyle(fontSize: 14, color: Colors.white70),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
                             );
-                          }
+                          },
                         ),
                         const SizedBox(height: 4),
                         Row(
@@ -559,7 +538,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                             const SizedBox(width: 4),
                             Text(
                               _formatLastSeen(device.lastSeen),
-                              style: const TextStyle(fontSize: 12, color: Colors.white60),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white60,
+                              ),
                             ),
                           ],
                         ),
@@ -567,62 +549,44 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                     ),
                   ),
 
-                  // 信号和电池状态
+                  // 信号和电池状态、连接状态 垂直排列
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 信号强度
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.signal_cellular_alt,
-                            color: _getSignalColor(device),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getSignalStrength(device),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _getSignalColor(device),
-                            ),
-                          ),
-                        ],
+                      // 电量百分比
+                      Text(
+                        _getBatteryLevel(device),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: _getBatteryColor(device),
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      // 电池状态
-                      Row(
-                        children: [
-                          Icon(
-                            _getBatteryIcon(device),
-                            color: _getBatteryColor(device),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getBatteryLevel(device),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _getBatteryColor(device),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 2),
+                      // 电池图标
+                      Icon(
+                        _getBatteryIcon(device),
+                        color: _getBatteryColor(device),
+                        size: 16,
                       ),
+                      const SizedBox(height: 8),
+                      // wifi图标
+                      Icon(
+                        device.isOnline ? Icons.wifi : Icons.wifi_off,
+                        color: device.isOnline ? Colors.green : Colors.grey,
+                        size: 16,
+                      ),
+                      const SizedBox(height: 8),
+                      // 编辑设备名称按钮
+                      // GestureDetector(
+                      //   onTap: () => _showRenameDeviceDialog(device),
+                      //   child: const Icon(
+                      //     Icons.edit,
+                      //     color: Colors.white70,
+                      //     size: 20,
+                      //   ),
+                      // ),
                     ],
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 连接状态图标
-                  Icon(
-                    device.isOnline ? Icons.wifi : Icons.wifi_off,
-                    color: device.isOnline ? Colors.green : Colors.grey,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 8),
-                  // 编辑设备名称按钮
-                  GestureDetector(
-                    onTap: () => _showRenameDeviceDialog(device),
-                    child: const Icon(Icons.edit, color: Colors.white70, size: 20),
                   ),
                 ],
               ),
@@ -1101,7 +1065,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
               ),
               const SizedBox(width: 8),
               const Text(
-                '智能管家',
+                '智能设置',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -1283,7 +1247,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   String _formatLastSeen(DateTime lastSeen) {
     final now = DateTime.now();
     final difference = now.difference(lastSeen);
-    
+
     if (difference.inMinutes < 1) {
       return '刚刚更新';
     } else if (difference.inHours < 1) {
@@ -1298,7 +1262,8 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   /// 获取信号强度
   String _getSignalStrength(DeviceModel device) {
     // 从设备属性中获取信号强度，如果没有则返回默认值
-    if (device.properties != null && device.properties!.containsKey('signalStrength')) {
+    if (device.properties != null &&
+        device.properties!.containsKey('signalStrength')) {
       return '${device.properties!['signalStrength']}%';
     }
     return '85%'; // 默认值
@@ -1307,10 +1272,11 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   /// 获取信号颜色
   Color _getSignalColor(DeviceModel device) {
     int strength = 85; // 默认值
-    if (device.properties != null && device.properties!.containsKey('signalStrength')) {
+    if (device.properties != null &&
+        device.properties!.containsKey('signalStrength')) {
       strength = device.properties!['signalStrength'] as int;
     }
-    
+
     if (strength > 70) {
       return Colors.green;
     } else if (strength > 30) {
@@ -1323,14 +1289,13 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   /// 获取电池图标
   IconData _getBatteryIcon(DeviceModel device) {
     int level = 80; // 默认值
-    if (device.properties != null && device.properties!.containsKey('batteryLevel')) {
+    if (device.properties != null &&
+        device.properties!.containsKey('batteryLevel')) {
       level = device.properties!['batteryLevel'] as int;
     }
-    
-    if (level > 80) {
+    // 60以上满，20-60三格，20及以下警告
+    if (level > 60) {
       return Icons.battery_full;
-    } else if (level > 50) {
-      return Icons.battery_5_bar;
     } else if (level > 20) {
       return Icons.battery_3_bar;
     } else {
@@ -1341,11 +1306,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   /// 获取电池颜色
   Color _getBatteryColor(DeviceModel device) {
     int level = 80; // 默认值
-    if (device.properties != null && device.properties!.containsKey('batteryLevel')) {
+    if (device.properties != null &&
+        device.properties!.containsKey('batteryLevel')) {
       level = device.properties!['batteryLevel'] as int;
     }
-    
-    if (level > 50) {
+    // 60以上绿色，20-60黄色，20及以下红色
+    if (level > 60) {
       return Colors.green;
     } else if (level > 20) {
       return Colors.orange;
@@ -1357,7 +1323,8 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   /// 获取电池电量
   String _getBatteryLevel(DeviceModel device) {
     // 从设备属性中获取电池电量，如果没有则返回默认值
-    if (device.properties != null && device.properties!.containsKey('batteryLevel')) {
+    if (device.properties != null &&
+        device.properties!.containsKey('batteryLevel')) {
       return '${device.properties!['batteryLevel']}%';
     }
     return '80%'; // 默认值
@@ -1367,14 +1334,14 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   Future<String> _getDeviceLocation(DeviceModel device) async {
     try {
       // 如果设备属性中已有位置信息，直接使用
-      if (device.properties != null && 
-          device.properties!.containsKey('latitude') && 
+      if (device.properties != null &&
+          device.properties!.containsKey('latitude') &&
           device.properties!.containsKey('longitude')) {
         double lat = device.properties!['latitude'];
         double lng = device.properties!['longitude'];
         return await _getAddressFromCoordinates(lat, lng);
       }
-      
+
       // 如果是宠物定位器类型，尝试获取当前位置
       if (device.type == DeviceType.petTracker) {
         // 检查位置权限
@@ -1394,14 +1361,17 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
         if (permission == LocationPermission.deniedForever) {
           return '位置权限被永久拒绝';
         }
-        
+
         Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
-        
-        return await _getAddressFromCoordinates(position.latitude, position.longitude);
+
+        return await _getAddressFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
       }
-      
+
       // 默认返回描述或固定位置
       return device.description ?? '深圳市万象城-B1层宠物区';
     } catch (e) {
@@ -1409,12 +1379,18 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
       return '获取位置失败';
     }
   }
-  
+
   /// 根据坐标获取地址
-  Future<String> _getAddressFromCoordinates(double latitude, double longitude) async {
+  Future<String> _getAddressFromCoordinates(
+    double latitude,
+    double longitude,
+  ) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
-      
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
+
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         return '${place.locality ?? ''} ${place.subLocality ?? ''} ${place.street ?? ''}';

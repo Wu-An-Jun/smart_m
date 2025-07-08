@@ -7,6 +7,9 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:collection/collection.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:vibration/vibration.dart';
 
 import '../common/Global.dart';
 import '../common/chat_history_service.dart';
@@ -66,6 +69,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // 模拟设备数据
   List<Map<String, dynamic>> _mockDevices = [];
 
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _voiceInput = '';
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +98,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     _animationController.forward();
+
+    _speech = stt.SpeechToText();
 
     // 检查是否有 sessionId 参数，有则加载历史消息
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -957,14 +966,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(9999),
             ),
             child: GestureDetector(
-              onTap: () {
-                Get.snackbar('提示', '语音功能开发中');
-              },
-              child: Center(
-                child: SvgPicture.asset(
-                  'imgs/input_mic_icon.svg',
-                  width: 20,
-                  height: 20,
+              onLongPress: _startListening,
+              onLongPressUp: () => _stopListening(cancel: true),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: _isListening ? 48 : 40,
+                height: _isListening ? 48 : 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1D35),
+                  borderRadius: BorderRadius.circular(9999),
+                  boxShadow: _isListening
+                      ? [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.5),
+                            blurRadius: 16,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    'imgs/input_mic_icon.svg',
+                    width: 20,
+                    height: 20,
+                    color: _isListening ? Colors.blue : null,
+                  ),
                 ),
               ),
             ),
@@ -1357,6 +1384,70 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return cleanText;
     } catch (e) {
       return '我来帮您打开${navigationInfo.pageName}页面。';
+    }
+  }
+
+  Future<void> _startListening() async {
+    var status = await Permission.microphone.status;
+    if (status.isDenied || status.isRestricted) {
+      status = await Permission.microphone.request();
+    }
+    if (!status.isGranted) {
+      Get.snackbar('权限提示', '请在系统设置中授予麦克风权限');
+      return;
+    }
+    bool available = await _speech.initialize(
+      onStatus: (val) {
+        if (val == 'done' || val == 'notListening') {
+          setState(() {
+            _isListening = false;
+          });
+        }
+      },
+      onError: (val) {
+        print('语音识别错误: code=${val.errorMsg}, details=${val.permanent}');
+        setState(() {
+          _isListening = false;
+        });
+        Get.snackbar('语音识别错误', val.errorMsg ?? '未知错误');
+      },
+    );
+    if (available) {
+      if (await Vibration.hasVibrator() ?? false) {
+        Vibration.vibrate(duration: 50);
+      }
+      setState(() {
+        _isListening = true;
+        _voiceInput = '';
+      });
+      _speech.listen(
+        onResult: (val) {
+          print('语音识别结果: ${val.recognizedWords}, isFinal: ${val.finalResult}');
+          setState(() {
+            _voiceInput = val.recognizedWords;
+            _messageController.text = _voiceInput;
+            _messageController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _messageController.text.length),
+            );
+          });
+        },
+        localeId: 'zh-CN', // 优先用中文普通话
+      );
+    } else {
+      Get.snackbar('提示', '语音识别不可用');
+    }
+  }
+
+  void _stopListening({bool cancel = false}) {
+    if (_isListening) {
+      if (cancel) {
+        _speech.cancel();
+      } else {
+        _speech.stop();
+      }
+      setState(() {
+        _isListening = false;
+      });
     }
   }
 }
