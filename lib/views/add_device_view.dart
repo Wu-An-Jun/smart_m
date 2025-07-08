@@ -18,49 +18,51 @@ class AddDeviceView extends StatelessWidget {
   Widget build(BuildContext context) {
     final pageContext = context;
     final DeviceController controller = Get.find<DeviceController>();
-    return Column(
-      children: [
-        // const SizedBox(height: 24),
-        _buildAppBar(pageContext),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Obx(() {
-            final isScanning = controller.isScanning;
-            final hasNewDevice = controller.devices.isNotEmpty;
-            // 三态切换
-            if (isScanning) {
-              return Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildBluetoothCard(controller),
-                  const SizedBox(height: 0),
-                  _buildActionRow(pageContext, controller),
-                  _buildCancelButton(controller),
-                ],
-              );
-            } else if (!isScanning && !hasNewDevice) {
-              return Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildBluetoothNotFoundCard(controller, pageContext),
-                  const SizedBox(height: 0),
-                  _buildActionRow(pageContext, controller),
-                ],
-              );
-            } else {
-              return Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildBluetoothIconButton(controller, pageContext),
-                  const SizedBox(height: 0),
-                  _buildActionRow(pageContext, controller),
-                ],
-              );
-            }
-          }),
-        ),
-        _buildProgressRow(),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // const SizedBox(height: 24),
+          _buildAppBar(pageContext),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Obx(() {
+              final isScanning = controller.isScanning;
+              final hasNewDevice = controller.devices.isNotEmpty;
+              // 三态切换
+              if (isScanning) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildBluetoothCard(controller),
+                    const SizedBox(height: 0),
+                    _buildActionRow(pageContext, controller),
+                    _buildCancelButton(controller),
+                  ],
+                );
+              } else if (!isScanning && !hasNewDevice) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildBluetoothNotFoundCard(controller, pageContext),
+                    const SizedBox(height: 0),
+                    _buildActionRow(pageContext, controller),
+                  ],
+                );
+              } else {
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildBluetoothIconButton(controller, pageContext),
+                    const SizedBox(height: 0),
+                    _buildActionRow(pageContext, controller),
+                  ],
+                );
+              }
+            }),
+          ),
+          _buildProgressRow(),
+        ],
+      ),
     );
   }
 
