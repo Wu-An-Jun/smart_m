@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 import '../common/Global.dart';
-import '../controllers/device_controller.dart';
 import '../models/device_model.dart';
+import '../controllers/device_controller.dart';
 import '../routes/app_routes.dart';
-import '../views/add_device_view.dart';
+import '../routes/geofence_management_page.dart';
 import '../widgets/center_popup.dart';
 import '../widgets/geofence_map_widget.dart';
 import '../widgets/more_settings_dialog.dart';
 import '../widgets/positioning_mode_selector.dart';
-import 'geofence_management_page.dart';
+import '../views/add_device_view.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class DeviceManagementPage extends StatefulWidget {
   const DeviceManagementPage({super.key});
@@ -457,63 +458,174 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     return GestureDetector(
       onTap: () => _handleDeviceItemTap(device),
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Global.currentTheme.surfaceColor.withOpacity(0.7),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: Column(
           children: [
-            // 设备图标
-            Container(
-              width: 48,
-              height: 48,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFB366), // 橙色图标背景
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _getDeviceIcon(device.type),
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-
-            // 设备信息
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // 状态栏
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    device.name,
+                    '${device.name} ${device.type == DeviceType.petTracker ? "定位器" : ""}',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    device.description ?? '深圳市万象城',
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.wifi,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.signal_cellular_alt,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        _getBatteryIcon(device),
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            
+            // 设备信息行
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // 设备图标
+                  Container(
+                    width: 48,
+                    height: 48,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFB366), // 橙色图标背景
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      _getDeviceIcon(device.type),
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
 
-            // 连接状态图标
-            Icon(
-              device.isOnline ? Icons.wifi : Icons.wifi_off,
-              color: device.isOnline ? Colors.green : Colors.grey,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            // 编辑设备名称按钮
-            GestureDetector(
-              onTap: () => _showRenameDeviceDialog(device),
-              child: const Icon(Icons.edit, color: Colors.white70, size: 20),
+                  // 设备信息
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          device.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        FutureBuilder<String>(
+                          future: _getDeviceLocation(device),
+                          builder: (context, snapshot) {
+                            return Text(
+                              snapshot.data ?? device.description ?? '获取位置中...',
+                              style: const TextStyle(fontSize: 14, color: Colors.white70),
+                            );
+                          }
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              color: Colors.white60,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatLastSeen(device.lastSeen),
+                              style: const TextStyle(fontSize: 12, color: Colors.white60),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 信号和电池状态
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // 信号强度
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.signal_cellular_alt,
+                            color: _getSignalColor(device),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getSignalStrength(device),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _getSignalColor(device),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // 电池状态
+                      Row(
+                        children: [
+                          Icon(
+                            _getBatteryIcon(device),
+                            color: _getBatteryColor(device),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getBatteryLevel(device),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _getBatteryColor(device),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 连接状态图标
+                  Icon(
+                    device.isOnline ? Icons.wifi : Icons.wifi_off,
+                    color: device.isOnline ? Colors.green : Colors.grey,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  // 编辑设备名称按钮
+                  GestureDetector(
+                    onTap: () => _showRenameDeviceDialog(device),
+                    child: const Icon(Icons.edit, color: Colors.white70, size: 20),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -1165,6 +1277,154 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
         foregroundColor: Colors.white,
       ),
     );
+  }
+
+  /// 格式化最后活跃时间
+  String _formatLastSeen(DateTime lastSeen) {
+    final now = DateTime.now();
+    final difference = now.difference(lastSeen);
+    
+    if (difference.inMinutes < 1) {
+      return '刚刚更新';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}分钟前更新';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}小时前更新';
+    } else {
+      return '${difference.inDays}天前更新';
+    }
+  }
+
+  /// 获取信号强度
+  String _getSignalStrength(DeviceModel device) {
+    // 从设备属性中获取信号强度，如果没有则返回默认值
+    if (device.properties != null && device.properties!.containsKey('signalStrength')) {
+      return '${device.properties!['signalStrength']}%';
+    }
+    return '85%'; // 默认值
+  }
+
+  /// 获取信号颜色
+  Color _getSignalColor(DeviceModel device) {
+    int strength = 85; // 默认值
+    if (device.properties != null && device.properties!.containsKey('signalStrength')) {
+      strength = device.properties!['signalStrength'] as int;
+    }
+    
+    if (strength > 70) {
+      return Colors.green;
+    } else if (strength > 30) {
+      return Colors.orange;
+    } else {
+      return Colors.red;
+    }
+  }
+
+  /// 获取电池图标
+  IconData _getBatteryIcon(DeviceModel device) {
+    int level = 80; // 默认值
+    if (device.properties != null && device.properties!.containsKey('batteryLevel')) {
+      level = device.properties!['batteryLevel'] as int;
+    }
+    
+    if (level > 80) {
+      return Icons.battery_full;
+    } else if (level > 50) {
+      return Icons.battery_5_bar;
+    } else if (level > 20) {
+      return Icons.battery_3_bar;
+    } else {
+      return Icons.battery_alert;
+    }
+  }
+
+  /// 获取电池颜色
+  Color _getBatteryColor(DeviceModel device) {
+    int level = 80; // 默认值
+    if (device.properties != null && device.properties!.containsKey('batteryLevel')) {
+      level = device.properties!['batteryLevel'] as int;
+    }
+    
+    if (level > 50) {
+      return Colors.green;
+    } else if (level > 20) {
+      return Colors.orange;
+    } else {
+      return Colors.red;
+    }
+  }
+
+  /// 获取电池电量
+  String _getBatteryLevel(DeviceModel device) {
+    // 从设备属性中获取电池电量，如果没有则返回默认值
+    if (device.properties != null && device.properties!.containsKey('batteryLevel')) {
+      return '${device.properties!['batteryLevel']}%';
+    }
+    return '80%'; // 默认值
+  }
+
+  /// 获取设备位置信息
+  Future<String> _getDeviceLocation(DeviceModel device) async {
+    try {
+      // 如果设备属性中已有位置信息，直接使用
+      if (device.properties != null && 
+          device.properties!.containsKey('latitude') && 
+          device.properties!.containsKey('longitude')) {
+        double lat = device.properties!['latitude'];
+        double lng = device.properties!['longitude'];
+        return await _getAddressFromCoordinates(lat, lng);
+      }
+      
+      // 如果是宠物定位器类型，尝试获取当前位置
+      if (device.type == DeviceType.petTracker) {
+        // 检查位置权限
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          return '位置服务未开启';
+        }
+
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.denied) {
+            return '位置权限被拒绝';
+          }
+        }
+
+        if (permission == LocationPermission.deniedForever) {
+          return '位置权限被永久拒绝';
+        }
+        
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        
+        return await _getAddressFromCoordinates(position.latitude, position.longitude);
+      }
+      
+      // 默认返回描述或固定位置
+      return device.description ?? '深圳市万象城-B1层宠物区';
+    } catch (e) {
+      print('获取位置失败: $e');
+      return '获取位置失败';
+    }
+  }
+  
+  /// 根据坐标获取地址
+  Future<String> _getAddressFromCoordinates(double latitude, double longitude) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        return '${place.locality ?? ''} ${place.subLocality ?? ''} ${place.street ?? ''}';
+      } else {
+        return '无法获取地址信息';
+      }
+    } catch (e) {
+      print('获取地址失败: $e');
+      return '地址解析失败';
+    }
   }
 
   @override

@@ -36,8 +36,8 @@ dependencies:
   flutter_markdown: ^0.7.3
   image_picker: ^1.0.4
   location: ^5.0.3
-  geolocator: ^10.1.0
-  geocoding: ^2.1.1
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
   video_player: ^2.8.2
   chewie: ^1.7.5
   webview_flutter: ^4.4.2

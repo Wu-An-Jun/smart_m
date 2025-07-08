@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:test_rec/routes/add_device_page.dart';
 import 'package:test_rec/routes/ai_assistant_test_page.dart';
+import 'package:test_rec/routes/ai_chat_history_page.dart';
 import 'package:test_rec/routes/amap_geofence_test_page.dart';
 import 'package:test_rec/routes/app_routes.dart';
 import 'package:test_rec/routes/assistant_page.dart';
@@ -40,6 +41,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.deviceList, page: () => const DeviceListPage()),
 
     GetPage(name: AppRoutes.assistant, page: () => const AssistantPage()),
+    GetPage(name: AppRoutes.aiChatHistory, page: () => const AiChatHistoryPage()),
     GetPage(name: AppRoutes.profile, page: () => const ProfilePage()),
     GetPage(name: AppRoutes.map, page: () => const MapPage()),
     GetPage(name: AppRoutes.deviceLocationMap, page: () => const DeviceLocationMapPage()),

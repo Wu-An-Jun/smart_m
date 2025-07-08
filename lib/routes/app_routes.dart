@@ -9,6 +9,7 @@ abstract class AppRoutes {
   static const deviceDetail = '/device-detail';
   static const assistant = '/assistant';
   static const aiAssistant = '/ai-assistant';
+  static const aiChatHistory = '/ai-chat-history';
   static const profile = '/profile';
   static const map = '/map';
   static const mapLocation = '/map/location';

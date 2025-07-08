@@ -4,7 +4,7 @@ import 'package:fl_amap/fl_amap.dart';
 void testAMapGeofenceApi() {
   // 初始化地理围栏
   FlAMapGeoFence().initialize(GeoFenceActivateAction.stayed);
-  
+
   // 添加监听器
   FlAMapGeoFence().addGeoFenceListener(
     onGeoFenceCreated: (result) {
@@ -18,14 +18,14 @@ void testAMapGeofenceApi() {
       print('纬度: ${result.latitude}');
     },
   );
-  
+
   // 添加圆形围栏
   FlAMapGeoFence().addCircle(
     latLng: LatLng(39.908692, 116.397477),
     radius: 300,
     customId: 'circle_1',
   );
-  
+
   // 添加多边形围栏
   FlAMapGeoFence().addCustom(
     latLngs: [
@@ -36,23 +36,23 @@ void testAMapGeofenceApi() {
     ],
     customId: 'polygon_1',
   );
-  
+
   // 移除围栏
   FlAMapGeoFence().remove(customId: 'circle_1');
-  
+
   // 暂停围栏监听
   FlAMapGeoFence().pause(customId: 'polygon_1');
-  
+
   // 开始围栏监听
   FlAMapGeoFence().start(customId: 'polygon_1');
-  
+
   // 获取所有围栏
   FlAMapGeoFence().getAll().then((fences) {
     for (var fence in fences) {
       print('围栏ID: ${fence.customId}');
     }
   });
-  
+
   // 销毁
   FlAMapGeoFence().dispose();
-} 
+}

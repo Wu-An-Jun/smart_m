@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 
 import '../common/dify_ai_service.dart';
 import '../common/page_navigator.dart';
+import '../common/chat_history_service.dart';
 import '../widgets/geofence_map_card.dart';
 import 'app_routes.dart';
 import 'geofence_demo_page.dart';
@@ -45,6 +46,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   final List<ChatMessage> _messages = [];
   final DifyAiService _aiService = DifyAiService();
+  final ChatHistoryService _chatHistoryService = ChatHistoryService.instance;
+  String? _currentSessionId;
   bool _isTyping = false;
   bool _autoScrollEnabled = true;
 
@@ -193,6 +196,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               },
             ),
             const Spacer(),
+            // 聊天历史按钮
+            Container(
+              width: 35,
+              height: 35,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A73E8),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.history, color: Colors.white, size: 20),
+                onPressed: () {
+                  Get.toNamed(AppRoutes.aiChatHistory);
+                },
+              ),
+            ),
+            // 添加设备按钮
             Container(
               width: 35,
               height: 35,
@@ -624,6 +644,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onPressed: () {
                     setState(() {
                       _messages.clear();
+                      _currentSessionId = null; // 重置会话ID，下次发送消息时会创建新会话
                     });
                   },
                   icon: const Icon(Icons.clear_all, size: 16),
@@ -1035,6 +1056,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                 }),
                 const Divider(color: Color(0xFF334155)),
+                _buildDrawerItem(Icons.chat_bubble_outline, 'AI聊天历史', () {
+                  Navigator.pop(context);
+                  Get.toNamed(AppRoutes.aiChatHistory);
+                }),
                 _buildDrawerItem(Icons.science, '智能管家测试', () {
                   Navigator.pop(context);
                   Get.toNamed(AppRoutes.aiAssistantTest);
@@ -1094,6 +1119,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  /// 获取或创建当前聊天会话
+  Future<String> _getCurrentSessionId() async {
+    if (_currentSessionId == null) {
+      final session = await _chatHistoryService.createNewSession();
+      _currentSessionId = session.id;
+    }
+    return _currentSessionId!;
+  }
+
+  /// 保存聊天消息到历史记录
+  Future<void> _saveChatMessage(String text, bool isUser, {String? navigationJson}) async {
+    try {
+      final sessionId = await _getCurrentSessionId();
+      final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+      
+      final message = ChatMessageData(
+        id: messageId,
+        text: text,
+        isUser: isUser,
+        timestamp: DateTime.now(),
+        navigationJson: navigationJson,
+      );
+      
+      await _chatHistoryService.saveChatMessage(sessionId, message);
+      
+      // 如果是会话的第一条用户消息，使用它来更新会话标题
+      if (isUser && _messages.length <= 2) {
+        final shortTitle = text.length > 20 ? '${text.substring(0, 20)}...' : text;
+        await _chatHistoryService.updateSessionTitle(sessionId, shortTitle);
+      }
+    } catch (e) {
+      print('保存聊天消息失败: $e');
+    }
+  }
+
   void _sendMessage(String text) {
     if (text.trim().isEmpty) return;
 
@@ -1103,6 +1163,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _isTyping = true;
       _autoScrollEnabled = true;
     });
+
+    // 保存用户消息到历史记录
+    _saveChatMessage(text.trim(), true);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottomSmooth();
@@ -1164,6 +1227,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               setState(() {
                 _isTyping = false;
               });
+
+              // 保存AI响应到历史记录
+              if (aiMessageIndex < _messages.length) {
+                final aiMessage = _messages[aiMessageIndex];
+                String? navigationJson;
+                if (aiMessage.navigationInfo != null) {
+                  navigationJson = jsonEncode({
+                    'action': 'navigate',
+                    'page_code': aiMessage.navigationInfo!.pageCode,
+                    'page_name': aiMessage.navigationInfo!.pageName,
+                    'reason': aiMessage.navigationInfo!.reason,
+                  });
+                }
+                _saveChatMessage(aiMessage.text, false, navigationJson: navigationJson);
+              }
 
               if (_autoScrollEnabled) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
