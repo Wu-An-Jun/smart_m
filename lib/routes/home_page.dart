@@ -7,9 +7,10 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
+import '../common/Global.dart';
+import '../common/chat_history_service.dart';
 import '../common/dify_ai_service.dart';
 import '../common/page_navigator.dart';
-import '../common/chat_history_service.dart';
 import '../widgets/geofence_map_card.dart';
 import 'app_routes.dart';
 import 'geofence_demo_page.dart';
@@ -223,7 +224,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: IconButton(
                 icon: const Icon(Icons.add, color: Color(0xFF0F172A), size: 20),
                 onPressed: () {
-                  Get.toNamed('/device-management', arguments: {'showAddDevice': true});
+                  Get.toNamed(
+                    '/device-management',
+                    arguments: {'showAddDevice': true},
+                  );
                 },
               ),
             ),
@@ -438,7 +442,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: _buildServiceOption(
                 icon: Icons.add_circle_outline,
                 label: '添加设备',
-                onTap: () => Get.toNamed('/device-management', arguments: {'showAddDevice': true}),
+                onTap:
+                    () => Get.toNamed(
+                      '/device-management',
+                      arguments: {'showAddDevice': true},
+                    ),
               ),
             ),
           ],
@@ -903,6 +911,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   /// 构建浮动输入栏
   Widget _buildFloatingInputBar() {
     return Container(
+      // 提供背景色Global.currentTheme.backgroundColor
+      //修复语法错误
+      decoration: BoxDecoration(color: Global.currentTheme.backgroundColor),
       // 高度和内边距严格参考设计稿
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1129,11 +1140,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   /// 保存聊天消息到历史记录
-  Future<void> _saveChatMessage(String text, bool isUser, {String? navigationJson}) async {
+  Future<void> _saveChatMessage(
+    String text,
+    bool isUser, {
+    String? navigationJson,
+  }) async {
     try {
       final sessionId = await _getCurrentSessionId();
       final messageId = DateTime.now().millisecondsSinceEpoch.toString();
-      
+
       final message = ChatMessageData(
         id: messageId,
         text: text,
@@ -1141,12 +1156,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         timestamp: DateTime.now(),
         navigationJson: navigationJson,
       );
-      
+
       await _chatHistoryService.saveChatMessage(sessionId, message);
-      
+
       // 如果是会话的第一条用户消息，使用它来更新会话标题
       if (isUser && _messages.length <= 2) {
-        final shortTitle = text.length > 20 ? '${text.substring(0, 20)}...' : text;
+        final shortTitle =
+            text.length > 20 ? '${text.substring(0, 20)}...' : text;
         await _chatHistoryService.updateSessionTitle(sessionId, shortTitle);
       }
     } catch (e) {
@@ -1240,7 +1256,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     'reason': aiMessage.navigationInfo!.reason,
                   });
                 }
-                _saveChatMessage(aiMessage.text, false, navigationJson: navigationJson);
+                _saveChatMessage(
+                  aiMessage.text,
+                  false,
+                  navigationJson: navigationJson,
+                );
               }
 
               if (_autoScrollEnabled) {

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../common/Global.dart';
 import '../controllers/user_controller.dart';
+import 'app_routes.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -183,64 +184,68 @@ class _ProfilePageState extends State<ProfilePage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                '选择头像',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.photo_camera, color: Color(0xFF3B82F6)),
-              title: const Text('拍照'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickAvatar(ImageSource.camera);
-              },
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF3B82F6)),
-              title: const Text('从相册选择'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickAvatar(ImageSource.gallery);
-              },
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFFF3F4F6),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    '选择头像',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
-                child: const Text(
-                  '取消',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_camera,
+                    color: Color(0xFF3B82F6),
+                  ),
+                  title: const Text('拍照'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAvatar(ImageSource.camera);
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: Color(0xFF3B82F6),
+                  ),
+                  title: const Text('从相册选择'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAvatar(ImageSource.gallery);
+                  },
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFF3F4F6),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      '取消',
+                      style: TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -253,11 +258,11 @@ class _ProfilePageState extends State<ProfilePage> {
       maxHeight: 512, // 限制图片最大高度
       imageQuality: 85, // 图片质量 (0-100)
     );
-    
+
     if (image != null) {
       // 1. 更新UserState
       Global.userState.updateAvatar(image.path);
-      
+
       // 2. 更新UserModel并持久化
       final userController = Get.find<UserController>();
       if (userController.user != null) {
@@ -265,13 +270,13 @@ class _ProfilePageState extends State<ProfilePage> {
         await userController.repository.saveUser(updated);
         userController.update();
       }
-      
+
       // 3. 强制刷新UI
       setState(() {});
-      
+
       // 4. 通知所有页面刷新
       Get.forceAppUpdate();
-      
+
       Get.snackbar('成功', '头像已更新');
     }
   }
@@ -313,33 +318,36 @@ class _ProfilePageState extends State<ProfilePage> {
                 // 流量充值服务
                 Row(
                   children: [
-                    Container(
-                      width: 81,
-                      height: 73,
-                      padding: const EdgeInsets.fromLTRB(18, 10, 15, 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: Colors.transparent,
-                      ),
-                      child: Column(
-                        children: [
-                          SvgPicture.asset(
-                            'imgs/service_recharge.svg',
-                            width: 30,
-                            height: 30,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '流量充值',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              height: 1.66,
-                              overflow: TextOverflow.ellipsis,
+                    GestureDetector(
+                      onTap: _navigateToDataRecharge,
+                      child: Container(
+                        width: 81,
+                        height: 73,
+                        padding: const EdgeInsets.fromLTRB(18, 10, 15, 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: Colors.transparent,
+                        ),
+                        child: Column(
+                          children: [
+                            SvgPicture.asset(
+                              'imgs/service_recharge.svg',
+                              width: 30,
+                              height: 30,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            const Text(
+                              '流量充值',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                height: 1.66,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -437,6 +445,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ),
+                // 生成间距
+                SizedBox(height: 10),
                 // 帮助中心
                 GestureDetector(
                   onTap: _showHelpCenter,
@@ -533,6 +543,11 @@ class _ProfilePageState extends State<ProfilePage> {
   // 显示个人账号页面
   void _showPersonalAccountPage() {
     Get.to(() => PersonalAccountPage(userInfo: _userInfo));
+  }
+
+  // 跳转到流量充值页面
+  void _navigateToDataRecharge() {
+    Get.toNamed(AppRoutes.dataRecharge);
   }
 
   void _showHelpCenter() {
@@ -771,7 +786,10 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                           height: 70,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+                            border: Border.all(
+                              color: Colors.grey.withOpacity(0.2),
+                              width: 1,
+                            ),
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: _buildAvatarInAccountPage(),
@@ -998,18 +1016,13 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
   Widget _buildAvatarInAccountPage() {
     final avatarPath = Global.userInfo['avatar'] ?? '';
     return avatarPath.isNotEmpty && File(avatarPath).existsSync()
-        ? Image.file(
-            File(avatarPath),
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-          )
+        ? Image.file(File(avatarPath), width: 60, height: 60, fit: BoxFit.cover)
         : Image.asset(
-            'imgs/user_avatar.jpeg',
-            fit: BoxFit.cover,
-            width: 60,
-            height: 60,
-          );
+          'imgs/user_avatar.jpeg',
+          fit: BoxFit.cover,
+          width: 60,
+          height: 60,
+        );
   }
 
   Widget _buildInfoItem({
@@ -1047,67 +1060,71 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                '选择头像',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.photo_camera, color: Color(0xFF3B82F6)),
-              title: const Text('拍照'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickAvatar(ImageSource.camera);
-              },
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF3B82F6)),
-              title: const Text('从相册选择'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickAvatar(ImageSource.gallery);
-              },
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFFF3F4F6),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    '选择头像',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
-                child: const Text(
-                  '取消',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_camera,
+                    color: Color(0xFF3B82F6),
+                  ),
+                  title: const Text('拍照'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAvatar(ImageSource.camera);
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: Color(0xFF3B82F6),
+                  ),
+                  title: const Text('从相册选择'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAvatar(ImageSource.gallery);
+                  },
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFF3F4F6),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      '取消',
+                      style: TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
-  
+
   // 选择头像（拍照或从相册）
   Future<void> _pickAvatar(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
@@ -1117,11 +1134,11 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
       maxHeight: 512, // 限制图片最大高度
       imageQuality: 85, // 图片质量 (0-100)
     );
-    
+
     if (image != null) {
       // 1. 更新UserState
       Global.userState.updateAvatar(image.path);
-      
+
       // 2. 更新UserModel并持久化
       final userController = Get.find<UserController>();
       if (userController.user != null) {
@@ -1129,13 +1146,13 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
         await userController.repository.saveUser(updated);
         userController.update();
       }
-      
+
       // 3. 强制刷新UI
       setState(() {});
-      
+
       // 4. 通知所有页面刷新
       Get.forceAppUpdate();
-      
+
       Get.snackbar('成功', '头像已更新');
     }
   }

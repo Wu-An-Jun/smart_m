@@ -6,6 +6,7 @@ import 'package:test_rec/routes/amap_geofence_test_page.dart';
 import 'package:test_rec/routes/app_routes.dart';
 import 'package:test_rec/routes/assistant_page.dart';
 import 'package:test_rec/routes/automation_creation_page.dart';
+import 'package:test_rec/routes/data_recharge_page.dart';
 import 'package:test_rec/routes/device_list_page.dart';
 import 'package:test_rec/routes/device_management_page.dart';
 import 'package:test_rec/routes/device_management_demo_page.dart';
@@ -47,6 +48,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.deviceLocationMap, page: () => const DeviceLocationMapPage()),
     GetPage(name: AppRoutes.smartLife, page: () => const SmartLifePage()),
     GetPage(name: AppRoutes.service, page: () => const ServicePage()),
+    GetPage(name: AppRoutes.dataRecharge, page: () => const DataRechargePage()),
     GetPage(name: AppRoutes.notifications, page: () => NotificationPage()),
     GetPage(
       name: AppRoutes.aiAssistantTest,

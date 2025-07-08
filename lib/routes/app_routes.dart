@@ -16,6 +16,7 @@ abstract class AppRoutes {
   static const deviceLocationMap = '/device-location-map';
   static const smartLife = '/smart-life';
   static const service = '/service';
+  static const dataRecharge = '/data-recharge';
   static const notifications = '/notifications';
   
   // 智能家居相关路由
