@@ -231,9 +231,8 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
   Widget _buildChatItem(ChatSessionData session) {
     return GestureDetector(
       onTap: () {
-        // 点击进入具体的聊天会话
-        Get.back();
-        Get.snackbar('提示', '打开聊天会话: ${session.title}');
+        // 跳转到聊天页面并传递 sessionId
+        Get.toNamed('/home', arguments: {'sessionId': session.id});
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),

@@ -95,7 +95,7 @@ class MoreSettingsDialog extends StatelessWidget {
               height: 32,
               alignment: Alignment.center,
               child: SvgPicture.asset(
-                'imgs/settings_close.svg',
+                'imgs/notification_setting_close.svg',
                 width: 20,
                 height: 20,
               ),
@@ -111,43 +111,39 @@ class MoreSettingsDialog extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 21.5, left: 20, right: 16.33),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Expanded(
-            child: _buildActionButton(
-              context: context,
-              svgAsset: 'imgs/remote_wakeup.svg',
-              label: '远程唤醒',
-              backgroundColor: const Color(0xFF3B82F6),
-              onTap: () {
-                Navigator.of(context).pop();
-                onRemoteWakeup?.call();
-              },
-            ),
+          _buildActionButton(
+            context: context,
+            svgAsset: 'imgs/notification_setting_wake.svg',
+            label: '远程唤醒',
+            backgroundColor: const Color(0xFF3B82F6),
+            onTap: () {
+              Navigator.of(context).pop();
+              onRemoteWakeup?.call();
+            },
           ),
-          Expanded(
-            child: _buildActionButton(
-              context: context,
-              svgAsset: 'imgs/restart.svg',
-              label: '一键重启',
-              backgroundColor: const Color(0xFF22C55E),
-              onTap: () {
-                Navigator.of(context).pop();
-                onOneKeyRestart?.call();
-              },
-            ),
+          const SizedBox(width: 14),
+          _buildActionButton(
+            context: context,
+            svgAsset: 'imgs/notification_setting_restart.svg',
+            label: '一键重启',
+            backgroundColor: const Color(0xFF22C55E),
+            onTap: () {
+              Navigator.of(context).pop();
+              onOneKeyRestart?.call();
+            },
           ),
-          Expanded(
-            child: _buildActionButton(
-              context: context,
-              svgAsset: 'imgs/factory_reset.svg',
-              label: '恢复出厂设置',
-              backgroundColor: const Color(0xFFF97316),
-              onTap: () {
-                Navigator.of(context).pop();
-                _showFactoryResetConfirm(context);
-              },
-            ),
+          const SizedBox(width: 14),
+          _buildActionButton(
+            context: context,
+            svgAsset: 'imgs/notification_setting_reset.svg',
+            label: '恢复出厂设置',
+            backgroundColor: const Color(0xFFF97316),
+            onTap: () {
+              Navigator.of(context).pop();
+              _showFactoryResetConfirm(context);
+            },
           ),
         ],
       ),
@@ -186,7 +182,7 @@ class MoreSettingsDialog extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          width: 83,
+          width: 56,
           child: Text(
             label,
             style: const TextStyle(

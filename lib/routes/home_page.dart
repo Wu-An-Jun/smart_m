@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:collection/collection.dart';
 
 import '../common/Global.dart';
 import '../common/chat_history_service.dart';
@@ -90,6 +91,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     _animationController.forward();
+
+    // 检查是否有 sessionId 参数，有则加载历史消息
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final args = Get.arguments;
+      if (args != null && args['sessionId'] != null) {
+        _currentSessionId = args['sessionId'] as String;
+        final history = await _chatHistoryService.getChatMessages(_currentSessionId!);
+        setState(() {
+          _messages.clear();
+          _messages.addAll(history.map((m) => ChatMessage(
+            text: m.text,
+            isUser: m.isUser,
+            timestamp: m.timestamp,
+          )));
+        });
+        // 自动修正会话标题
+        final sessions = await _chatHistoryService.getChatSessions();
+        final session = sessions.firstWhereOrNull((s) => s.id == _currentSessionId);
+        if (session != null && session.title == '新建对话' && history.isNotEmpty) {
+          final firstUserMsg = history.firstWhereOrNull((m) => m.isUser);
+          if (firstUserMsg != null && firstUserMsg.text.trim().isNotEmpty) {
+            final shortTitle = firstUserMsg.text.length > 20 ? '${firstUserMsg.text.substring(0, 20)}...' : firstUserMsg.text;
+            await _chatHistoryService.updateSessionTitle(_currentSessionId!, shortTitle);
+          }
+        }
+      }
+    });
   }
 
   @override
