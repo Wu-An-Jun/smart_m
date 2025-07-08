@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../common/Global.dart';
 import '../controllers/device_controller.dart';
@@ -41,6 +42,9 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   // 控制是否显示添加设备界面
   final RxBool _showAddDeviceView = false.obs;
 
+  DateTime? _disconnectTime;
+  String? _currentDeviceId;
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +62,39 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showCatLocator();
       });
+    }
+  }
+
+  Future<void> _loadPersistedState() async {
+    if (_currentDeviceId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final switchVal = prefs.getBool('remote_switch_${_currentDeviceId!}');
+    if (switchVal != null) {
+      _remoteSwitch.value = switchVal;
+    } else {
+      _remoteSwitch.value = true; // 默认开启
+    }
+    final disconnectStr = prefs.getString('disconnect_time_${_currentDeviceId!}');
+    if (disconnectStr != null) {
+      _disconnectTime = DateTime.tryParse(disconnectStr);
+    } else {
+      _disconnectTime = null;
+    }
+  }
+
+  Future<void> _saveRemoteSwitchState() async {
+    if (_currentDeviceId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('remote_switch_${_currentDeviceId!}', _remoteSwitch.value);
+  }
+
+  Future<void> _saveDisconnectTime() async {
+    if (_currentDeviceId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (_disconnectTime == null) {
+      await prefs.remove('disconnect_time_${_currentDeviceId!}');
+    } else {
+      await prefs.setString('disconnect_time_${_currentDeviceId!}', _disconnectTime!.toIso8601String());
     }
   }
 
@@ -84,15 +121,28 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   }
 
   /// 切换远程开关状态
-  void _toggleRemoteSwitch() {
+  void _toggleRemoteSwitch() async {
     _remoteSwitch.value = !_remoteSwitch.value;
-    Get.snackbar(
-      '远程开关',
-      _remoteSwitch.value ? '设备已开启' : '设备已关闭',
-      backgroundColor: Global.currentTheme.primaryColor.withOpacity(0.1),
-      colorText: Global.currentTheme.primaryColor,
-      duration: const Duration(seconds: 2),
-    );
+    await _saveRemoteSwitchState();
+    if (!_remoteSwitch.value) {
+      if (_disconnectTime == null) {
+        _disconnectTime = DateTime.now();
+        await _saveDisconnectTime();
+      }
+      Get.rawSnackbar(
+        messageText: _buildDeviceDisconnectedBanner(),
+        backgroundColor: Colors.transparent,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+        duration: const Duration(seconds: 3),
+        snackStyle: SnackStyle.FLOATING,
+        isDismissible: true,
+      );
+    } else {
+      _disconnectTime = null;
+      await _saveDisconnectTime();
+    }
   }
 
   /// 移除任务
@@ -633,22 +683,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
 
   /// 处理设备项点击
   void _handleDeviceItemTap(DeviceModel device) {
-    // 如果是宠物定位器，显示猫咪定位器界面
     if (device.type == DeviceType.petTracker) {
+      _currentDeviceId = device.id;
+      _loadPersistedState();
       _showCatLocator();
-    } else if (device.type == DeviceType.map) {
-      // 如果是地图设备，跳转到地理围栏管理页面
-      _handleGeofenceCardTap();
     } else {
-      // 其他设备类型可以在这里添加对应的处理逻辑
-      // 暂时显示提示信息
-      Get.snackbar(
-        '设备详情',
-        '${device.name} 功能开发中',
-        backgroundColor: Global.currentTheme.primaryColor.withOpacity(0.1),
-        colorText: Global.currentTheme.primaryColor,
-        duration: const Duration(seconds: 2),
-      );
+      Get.toNamed(AppRoutes.deviceDetail, arguments: device);
     }
   }
 
@@ -853,6 +893,122 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
 
   /// 构建地图区域
   Widget _buildMapSection() {
+    if (!_remoteSwitch.value) {
+      // 断开样式
+      final String timeStr = _disconnectTime == null
+          ? ''
+          : _formatDisconnectTime(_disconnectTime!);
+      return Container(
+        height: 300,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xFF9CA3AF), // 灰色背景，若有断开背景图可替换
+        ),
+        child: Stack(
+          children: [
+            // 背景图（如有）
+            // Positioned.fill(
+            //   child: Image.asset('imgs/device_disconnect_bg.png', fit: BoxFit.cover),
+            // ),
+            // 半透明蒙层
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0x661F2937), // #1F2937, 40%透明
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            // 顶部右侧icon
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(9999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.10),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    'imgs/device_disconnect_main_icon.svg',
+                    width: 20,
+                    height: 20,
+                    color: const Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+            ),
+            // 中间大icon
+            Positioned(
+              top: 68,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SvgPicture.asset(
+                  'imgs/device_disconnect_center_icon.svg',
+                  width: 48,
+                  height: 48,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            // 标题
+            Positioned(
+              top: 132,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  '设备连接已断开',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Alibaba PuHuiTi 3.0',
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+            // 底部提示
+            Positioned(
+              bottom: 24,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '显示最后更新时间：$timeStr',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: 'Alibaba PuHuiTi 3.0',
+                      height: 16 / 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    // 正常地图
     return Container(
       height: 300, // 增加地图高度
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -885,6 +1041,16 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
         ),
       ),
     );
+  }
+
+  String _formatDisconnectTime(DateTime time) {
+    final now = DateTime.now();
+    if (now.difference(time).inDays == 0) {
+      // 今天
+      return '今天 ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    } else {
+      return '${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')} ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    }
   }
 
   /// 构建功能列表
@@ -1003,9 +1169,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     required VoidCallback onTap,
     Color? iconColor,
   }) {
+    final bool isRemoteSwitch = label == '远程开关';
+    final bool isRemoteSwitchOff = isRemoteSwitch && iconColor == const Color(0xFFBDBDBD);
+    final bool isDisableByRemote = !isRemoteSwitch && !_remoteSwitch.value && (label == '电子围栏' || label == '定位模式' || label == '更多设置');
     return Expanded(
       child: GestureDetector(
-        onTap: onTap,
+        onTap: isDisableByRemote ? null : onTap, // 远程开关始终可点
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           color: Colors.transparent,
@@ -1013,26 +1182,39 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: bgColor,
+                  color: isRemoteSwitchOff
+                      ? const Color(0x99D1D5DB)
+                      : isDisableByRemote
+                          ? const Color(0xFFF3F4F6)
+                          : bgColor,
                   borderRadius: BorderRadius.circular(9999),
                 ),
+                padding: isRemoteSwitchOff ? const EdgeInsets.all(12) : EdgeInsets.zero,
                 child: Center(
                   child: SvgPicture.asset(
-                    svgPath,
-                    width: 20,
-                    height: 20,
-                    color: iconColor,
+                    isRemoteSwitchOff ? 'imgs/automation_icon.svg' : svgPath,
+                    width: isRemoteSwitchOff ? 24 : 20,
+                    height: isRemoteSwitchOff ? 24 : 20,
+                    color: isRemoteSwitchOff
+                        ? const Color(0xFF6B7280)
+                        : isDisableByRemote
+                            ? const Color(0xFFD1D5DB)
+                            : iconColor,
                   ),
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Color(0xFF1F2937),
+                style: TextStyle(
+                  color: isRemoteSwitchOff
+                      ? const Color(0xFF1F2937)
+                      : isDisableByRemote
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF1F2937),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   fontFamily: 'Alibaba PuHuiTi 3.0',
@@ -1109,6 +1291,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     required VoidCallback onTap,
   }) {
     if (task.isEmpty) return const SizedBox.shrink();
+    final bool isRemoteSwitchOff = !_remoteSwitch.value;
     return Container(
       width: double.infinity, // 拉满父容器宽度
       decoration: BoxDecoration(
@@ -1131,8 +1314,8 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
           Expanded(
             child: Text(
               task,
-              style: const TextStyle(
-                color: Color(0xFF1F2937),
+              style: TextStyle(
+                color: isRemoteSwitchOff ? const Color(0xFF9CA3AF) : const Color(0xFF1F2937),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 fontFamily: 'Alibaba PuHuiTi 3.0',
@@ -1143,12 +1326,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
             ),
           ),
           GestureDetector(
-            onTap: onTap,
+            onTap: isRemoteSwitchOff ? null : onTap,
             child: SvgPicture.asset(
               svgPath,
               width: 20,
               height: 20,
-              color: const Color(0xFF9CA3AF),
+              color: isRemoteSwitchOff ? const Color(0xFFD1D5DB) : const Color(0xFF9CA3AF),
             ),
           ),
         ],
@@ -1401,6 +1584,50 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
       print('获取地址失败: $e');
       return '地址解析失败';
     }
+  }
+
+  /// 设备断开提示
+  Widget _buildDeviceDisconnectedBanner() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xE6F59E0B), // #F59E0B, 90%不透明
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.only(left: 12, right: 19.82, top: 12, bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 18.11,
+            height: 40,
+            alignment: Alignment.center,
+            margin: const EdgeInsets.only(top: 0, bottom: 0),
+            child: SvgPicture.asset(
+              'imgs/device_disconnect_icon.svg',
+              width: 18.11,
+              height: 18.11,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '设备已断开，部分功能不可用。请检查网络连接后重试。',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontFamily: 'Alibaba PuHuiTi 3.0',
+                fontWeight: FontWeight.w400,
+                height: 20 / 14,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
