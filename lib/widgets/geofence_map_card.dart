@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/geofence_model.dart';
+
 import '../common/Global.dart';
+import '../models/geofence_model.dart';
 import 'geofence_map_widget.dart';
 
 /// 地理围栏卡片配置
@@ -42,12 +43,14 @@ class GeofenceMapCard extends StatefulWidget {
     this.onTap,
     this.onHeaderTap, // 新增
     this.customGeofences,
-  }) : mapConfig = mapConfig ?? const GeofenceMapConfig(
-          showStatus: false,
-          showEvents: false,
-          showLegend: false,
-          height: 200.0,
-        );
+  }) : mapConfig =
+           mapConfig ??
+           const GeofenceMapConfig(
+             showStatus: false,
+             showEvents: false,
+             showLegend: false,
+             height: 200.0,
+           );
 
   @override
   State<GeofenceMapCard> createState() => _GeofenceMapCardState();
@@ -63,9 +66,7 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
       elevation: 4,
       margin: const EdgeInsets.all(8),
       color: widget.cardConfig.backgroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: widget.onTap,
         borderRadius: BorderRadius.circular(16),
@@ -77,9 +78,9 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
             children: [
               // 卡片头部
               _buildCardHeader(),
-              
-              const SizedBox(height: 12),
-              
+
+              const SizedBox(height: 6),
+
               // 地图区域
               Expanded(
                 child: ClipRRect(
@@ -92,7 +93,7 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
                   ),
                 ),
               ),
-              
+
               // 底部状态栏（紧凑模式）
               if (widget.cardConfig.compactMode) ...[
                 const SizedBox(height: 8),
@@ -115,14 +116,10 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Global.currentTheme.primaryColor.withOpacity(0.1),
+              color: Global.currentTheme.backgroundColor,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              widget.cardConfig.icon,
-              color: Global.currentTheme.primaryColor,
-              size: 24,
-            ),
+            child: Icon(widget.cardConfig.icon, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 12),
           // 标题和副标题
@@ -144,7 +141,10 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
                     widget.cardConfig.subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Global.currentTheme.isDark ? Colors.grey[400] : Colors.grey[600],
+                      color:
+                          Global.currentTheme.isDark
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
                     ),
                   ),
                 ],
@@ -159,7 +159,10 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
                 // 事件计数徽章
                 if (_eventCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(12),
@@ -205,15 +208,21 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
           Icon(
             Icons.location_searching,
             size: 16,
-            color: Global.currentTheme.isDark ? Colors.grey[400] : Colors.grey[600],
+            color:
+                Global.currentTheme.isDark
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
           ),
           const SizedBox(width: 8),
           Expanded(
-            child:             Text(
+            child: Text(
               _currentStatus,
               style: TextStyle(
                 fontSize: 10,
-                color: Global.currentTheme.isDark ? Colors.grey[400] : Colors.grey[600],
+                color:
+                    Global.currentTheme.isDark
+                        ? Colors.grey[400]
+                        : Colors.grey[600],
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -280,11 +289,7 @@ class GeofenceIndicator extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: size * 0.6,
-          ),
+          Icon(icon, color: color, size: size * 0.6),
           const SizedBox(width: 4),
           Text(
             text,
@@ -324,4 +329,4 @@ class GeofenceIndicator extends StatelessWidget {
         return Icons.radio_button_unchecked;
     }
   }
-} 
+}

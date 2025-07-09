@@ -14,11 +14,11 @@ import '../common/Global.dart';
 import '../common/chat_history_service.dart';
 import '../common/dify_ai_service.dart';
 import '../common/page_navigator.dart';
+import '../controllers/device_controller.dart';
+import '../models/device_model.dart';
 import '../widgets/geofence_map_card.dart';
 import 'app_routes.dart';
 import 'geofence_demo_page.dart';
-import '../controllers/device_controller.dart';
-import '../models/device_model.dart';
 
 class ChatMessage {
   final String text;
@@ -467,7 +467,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, top: 8),
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 0),
       child: _buildExpandedServiceCard(expandedService),
     );
   }
@@ -476,7 +476,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildExpandedServiceCard(String serviceLabel) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
@@ -668,7 +668,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   /// 构建地理围栏状态卡片（多设备分页）
   Widget _buildGeofenceStatusCard() {
-    final List<DeviceModel> petTrackers = _deviceController.getDevicesByType(DeviceType.petTracker);
+    final List<DeviceModel> petTrackers = _deviceController.getDevicesByType(
+      DeviceType.petTracker,
+    );
     if (petTrackers.isEmpty) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -737,7 +739,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           height: 8,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: index == current ? const Color(0xFF3B82F6) : const Color(0xFF64748B),
+            color:
+                index == current
+                    ? const Color(0xFF3B82F6)
+                    : const Color(0xFF64748B),
           ),
         );
       }),
@@ -1546,10 +1551,7 @@ class DeviceTapHandler {
         arguments: {'showCatLocator': true, 'deviceId': device.id},
       );
     } else {
-      Navigator.of(context).pushNamed(
-        '/device-detail',
-        arguments: device,
-      );
+      Navigator.of(context).pushNamed('/device-detail', arguments: device);
     }
   }
 }

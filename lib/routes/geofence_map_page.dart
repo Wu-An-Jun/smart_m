@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../widgets/geofence_map_widget.dart';
+
 import '../common/geofence_service.dart';
 import '../models/geofence_model.dart';
+import '../widgets/geofence_map_widget.dart';
 
 /// 完整的地理围栏地图页面
 /// 主要用于主页地图卡片点击后的全屏显示
@@ -19,7 +20,7 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
   int _eventsCount = 0;
   VoidCallback? _redrawMapCallback;
   VoidCallback? _clearMapCallback;
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,11 +35,11 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
         _eventsCount++;
         _statusText = '${event.status.name}: ${event.geofenceName}';
       });
-      
+
       // 显示事件通知
       _showEventSnackBar(event);
     });
-    
+
     // 更新围栏统计
     _updateGeofenceStats();
   }
@@ -55,7 +56,7 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
     IconData iconData;
     Color color;
     String message;
-    
+
     switch (event.status) {
       case GeofenceStatus.enter:
         iconData = Icons.login;
@@ -140,10 +141,13 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
     final circleGeofence = GeofenceModel.circle(
       id: 'test_circle_${DateTime.now().millisecondsSinceEpoch}',
       name: '测试圆形围栏',
-      center: const LocationPoint(latitude: 39.9087, longitude: 116.3975), // 北京天安门
+      center: const LocationPoint(
+        latitude: 39.9087,
+        longitude: 116.3975,
+      ), // 北京天安门
       radius: 500.0,
     );
-    
+
     // 添加多边形测试围栏
     final polygonGeofence = GeofenceModel.polygon(
       id: 'test_polygon_${DateTime.now().millisecondsSinceEpoch}',
@@ -159,12 +163,12 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
     // 添加到服务
     _geofenceService.addGeofence(circleGeofence);
     _geofenceService.addGeofence(polygonGeofence);
-    
+
     // 同步到地图
     _redrawMapCallback?.call();
-    
+
     _updateGeofenceStats();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('已添加测试围栏'),
@@ -178,16 +182,16 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
   void _clearAllGeofences() {
     // 清空服务中的围栏
     _geofenceService.clearGeofences();
-    
+
     // 清空地图上的围栏
     _clearMapCallback?.call();
-    
+
     _updateGeofenceStats();
     setState(() {
       _eventsCount = 0;
       _statusText = '已清空所有围栏';
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('已清空所有围栏'),
@@ -202,15 +206,21 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
     // 模拟在北京天安门附近的位置
     final testLocation1 = LocationPoint(latitude: 39.9087, longitude: 116.3975);
     final testLocation2 = LocationPoint(latitude: 39.9100, longitude: 116.4000);
-    
+
     // 触发位置检查
-    _geofenceService.checkLocation(testLocation1.latitude, testLocation1.longitude);
-    
+    _geofenceService.checkLocation(
+      testLocation1.latitude,
+      testLocation1.longitude,
+    );
+
     // 延迟后再检查另一个位置
     Future.delayed(const Duration(seconds: 2), () {
-      _geofenceService.checkLocation(testLocation2.latitude, testLocation2.longitude);
+      _geofenceService.checkLocation(
+        testLocation2.latitude,
+        testLocation2.longitude,
+      );
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('🧪 正在测试围栏检测...'),
@@ -227,10 +237,7 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
       appBar: AppBar(
         title: const Text(
           '地理围栏地图',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: const Color(0xFF6B4DFF),
         foregroundColor: Colors.white,
@@ -245,7 +252,10 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
             padding: const EdgeInsets.only(right: 16),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
@@ -307,7 +317,7 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
               ],
             ),
           ),
-          
+
           // 地图区域
           Expanded(
             child: Container(
@@ -362,9 +372,9 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 12),
-                  
+
                   // 测试围栏按钮
                   Expanded(
                     child: ElevatedButton.icon(
@@ -381,9 +391,9 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 12),
-                  
+
                   // 清空围栏按钮
                   Expanded(
                     child: OutlinedButton.icon(
@@ -414,4 +424,4 @@ class _GeofenceMapPageState extends State<GeofenceMapPage> {
     _geofenceService.dispose();
     super.dispose();
   }
-} 
+}
