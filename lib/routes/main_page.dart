@@ -15,20 +15,13 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
-
-  late final List<Widget> _pages;
+  String? _sessionId;
   late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
-    _pages = [
-      const HomePage(),
-      const DeviceManagementPage(),
-      // const AssistantPage(),
-      const ProfilePage(),
-    ];
 
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
@@ -40,17 +33,22 @@ class _MainPageState extends State<MainPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null && args['selectedIndex'] != null) {
-      final int newIndex = args['selectedIndex'] as int;
-      if (newIndex != _currentIndex) {
-        setState(() {
-          _currentIndex = newIndex;
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _pageController.jumpToPage(newIndex);
-          }
-        });
+    if (args != null) {
+      if (args['selectedIndex'] != null) {
+        final int newIndex = args['selectedIndex'] as int;
+        if (newIndex != _currentIndex) {
+          setState(() {
+            _currentIndex = newIndex;
+          });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _pageController.jumpToPage(newIndex);
+            }
+          });
+        }
+      }
+      if (args['sessionId'] != null) {
+        _sessionId = args['sessionId'] as String;
       }
     }
   }
@@ -96,7 +94,11 @@ class _MainPageState extends State<MainPage> {
             _currentIndex = index;
           });
         },
-        children: _pages,
+        children: [
+          HomePage(sessionId: _sessionId),
+          const DeviceManagementPage(),
+          const ProfilePage(),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

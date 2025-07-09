@@ -33,7 +33,8 @@ class ChatMessage {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String? sessionId;
+  const HomePage({Key? key, this.sessionId}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -102,9 +103,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     // 检查是否有 sessionId 参数，有则加载历史消息
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      String? sessionId = widget.sessionId;
       final args = Get.arguments;
-      if (args != null && args['sessionId'] != null) {
-        _currentSessionId = args['sessionId'] as String;
+      if (sessionId == null && args != null && args['sessionId'] != null) {
+        sessionId = args['sessionId'] as String;
+      }
+      if (sessionId != null) {
+        _currentSessionId = sessionId;
         final history = await _chatHistoryService.getChatMessages(
           _currentSessionId!,
         );

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../common/Global.dart';
 import '../common/chat_history_service.dart';
+import '../routes/app_routes.dart';
 
 /// AI聊天历史页面
 class AiChatHistoryPage extends StatefulWidget {
@@ -214,7 +215,7 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
     return GestureDetector(
       onTap: () {
         // 跳转到聊天页面并传递 sessionId
-        Get.toNamed('/home', arguments: {'sessionId': session.id});
+        Get.offAllNamed(AppRoutes.main, arguments: {'selectedIndex': 0, 'sessionId': session.id});
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
