@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../common/Global.dart';
 import '../common/chat_history_service.dart';
 
 /// AI聊天历史页面
@@ -46,20 +48,17 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        // backgroundColor: Colors.transparent,
+        backgroundColor: Global.currentTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black87,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
         ),
         title: const Text(
-          'AI助手',
+          'AI助手聊天历史',
           style: TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -72,22 +71,23 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            
+
             // 新建对话按钮
             _buildNewChatButton(),
-            
+
             const SizedBox(height: 24),
-            
+
             // 历史会话标题
             _buildHistoryTitle(),
-            
+
             const SizedBox(height: 16),
-            
+
             // 聊天历史列表
             Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : _buildChatHistoryList(),
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _buildChatHistoryList(),
             ),
           ],
         ),
@@ -112,20 +112,13 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
         width: double.infinity,
         height: 48,
         decoration: BoxDecoration(
-          border: Border.all(
-            color: const Color(0xFF1A73E8),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFF1A73E8), width: 1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.add,
-              size: 20,
-              color: Color(0xFF1A73E8),
-            ),
+            const Icon(Icons.add, size: 20, color: Color(0xFF1A73E8)),
             const SizedBox(width: 8),
             const Text(
               '新建对话',
@@ -145,11 +138,7 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
   Widget _buildHistoryTitle() {
     return Row(
       children: [
-        const Icon(
-          Icons.history,
-          size: 24,
-          color: Color(0xFF1A73E8),
-        ),
+        const Icon(Icons.history, size: 24, color: Color(0xFF1A73E8)),
         const SizedBox(width: 8),
         const Text(
           '历史会话',
@@ -170,11 +159,7 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.chat_bubble_outline,
-              size: 80,
-              color: Color(0xFF9CA3AF),
-            ),
+            Icon(Icons.chat_bubble_outline, size: 80, color: Color(0xFF9CA3AF)),
             SizedBox(height: 16),
             Text(
               '暂无聊天记录',
@@ -187,10 +172,7 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
             SizedBox(height: 8),
             Text(
               '开始您的第一次对话吧',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
             ),
           ],
         ),
@@ -216,10 +198,10 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
                 ),
               ),
             ),
-            
+
             // 会话列表
             ...group.sessions.map((session) => _buildChatItem(session)),
-            
+
             const SizedBox(height: 16),
           ],
         );
@@ -278,4 +260,4 @@ class _AiChatHistoryPageState extends State<AiChatHistoryPage> {
       ),
     );
   }
-} 
+}

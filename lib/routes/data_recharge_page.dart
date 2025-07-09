@@ -13,7 +13,12 @@ class _DataRechargePageState extends State<DataRechargePage> {
   double selectedPrice = 95.0;
 
   final List<DataPackage> packages = [
-    DataPackage(data: '100G', price: 95.0, isSelected: true),
+    DataPackage(
+      data: '100G',
+      price: 95.0,
+      isRecommended: true,
+      isSelected: true,
+    ),
     DataPackage(data: '50G', price: 60.0, isRecommended: true),
     DataPackage(data: '30G', price: 30.25),
     DataPackage(data: '25G', price: 25.0),
@@ -116,7 +121,7 @@ class _DataRechargePageState extends State<DataRechargePage> {
               onTap: () => _selectPackage(package),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(0),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF1A73E8) : Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -143,35 +148,42 @@ class _DataRechargePageState extends State<DataRechargePage> {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          package.data,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isSelected
-                                    ? Colors.white
-                                    : const Color(0xFF1A73E8),
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            package.data,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF1A73E8),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          '售价: ${package.price.toStringAsFixed(package.price == package.price.round() ? 0 : 2)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected ? Colors.white : Colors.grey[600],
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            '售价: ${package.price.toStringAsFixed(package.price == package.price.round() ? 0 : 2)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  isSelected ? Colors.white : Colors.grey[600],
+                            ),
                           ),
                         ),
                       ],
                     ),
                     if (package.isRecommended)
                       Positioned(
-                        top: -4,
-                        right: -4,
+                        top: 0,
+                        right: 0,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
-                            vertical: 2,
+                            vertical: 5,
                           ),
                           decoration: const BoxDecoration(
                             color: Color(0xFFFF9500),

@@ -47,62 +47,88 @@ class NotificationPage extends StatelessWidget {
     return Container(
       color: Global.currentTheme.backgroundColor,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
         child: Card(
+          margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12),
           ),
-          //背景改为白色
           color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 顶部栏
+              Container(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+                  ),
+                ),
+                padding: const EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 16,
+                  bottom: 17,
+                ),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       '通知列表',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Color(0xFF666666),
+                        fontFamily: 'Noto Sans',
+                        fontSize: 16,
+                        height: 1.5,
+                        fontWeight: FontWeight.normal,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => notificationState.markAllAsRead(),
-                      child: Row(
-                        children: [
-                          Text(
-                            '全部已读',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
+                    Row(
+                      children: [
+                        // 开发用清空按钮
+                        TextButton(
+                          onPressed:
+                              () => notificationState.clearAllNotifications(),
+                          child: const Text(
+                            '清空通知',
+                            style: TextStyle(fontSize: 12, color: Colors.red),
                           ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.check_circle_outline,
-                            size: 16,
-                            color: Colors.grey[500],
+                        ),
+                        GestureDetector(
+                          onTap: () => notificationState.markAllAsRead(),
+                          child: Row(
+                            children: [
+                              const Text(
+                                '全部已读',
+                                style: TextStyle(
+                                  color: Color(0xFF666666),
+                                  fontSize: 14,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              SvgPicture.asset(
+                                'imgs/notification_all_read.svg',
+                                width: 20,
+                                height: 20,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child:
-                      notificationState.notifications.isEmpty
-                          ? const Center(
-                            child: Text(
-                              '暂无消息内容',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          )
-                          : ListView.builder(
+              ),
+              // 内容区
+              Expanded(
+                child:
+                    notificationState.notifications.isEmpty
+                        ? _buildEmptyNotification()
+                        : Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: ListView.builder(
                             itemCount:
                                 notificationState.notifications.length + 1,
                             itemBuilder: (context, index) {
@@ -129,9 +155,71 @@ class NotificationPage extends StatelessWidget {
                               }
                             },
                           ),
+                        ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 空状态UI，完全还原喵多设计
+  Widget _buildEmptyNotification() {
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 装饰图标，偏右上
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 54, bottom: 0),
+                  child: SvgPicture.asset(
+                    'imgs/notification_empty_decor.svg',
+                    width: 64,
+                    height: 56.89,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-              ],
-            ),
+              ),
+              // 主图标，居中
+              Padding(
+                padding: const EdgeInsets.only(top: 0, bottom: 8),
+                child: SvgPicture.asset(
+                  'imgs/notification_empty_main.svg',
+                  width: 64,
+                  height: 64,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '您还没有收到任何通知',
+                style: TextStyle(
+                  color: Color(0xFF999999),
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 37),
+                child: Text(
+                  '当您的宠物设备触发报警时，消息将显示在这里',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFFAAAAAA),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -139,100 +227,118 @@ class NotificationPage extends StatelessWidget {
   }
 
   Widget _buildNotificationItem(NotificationModel notification) {
-    return InkWell(
-      onTap: () {
-        if (notification.details != null) {
-          notificationState.selectNotification(notification);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.grey[100]!, width: 1),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: InkWell(
+        onTap: () {
+          if (notification.details != null) {
+            notificationState.selectNotification(notification);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: Colors.grey[100]!, width: 1),
+            ),
           ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: notification.read ? Colors.grey[300] : Color(0xFFD2B48C),
-                shape: BoxShape.circle,
-              ),
-              child: Stack(
-                children: [
-                  const Center(
-                    child: Icon(
-                      Icons.location_on,
-                      color: Colors.white,
-                      size: 24,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color:
+                      notification.read ? Colors.grey[300] : Color(0xFFD2B48C),
+                  shape: BoxShape.circle,
+                ),
+                child: Stack(
+                  children: [
+                    const Center(
+                      child: Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
-                  ),
-                  if (!notification.read)
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                    if (!notification.read)
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF9500),
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(8),
+                              bottomLeft: Radius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            '推荐',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Alibaba PuHuiTi 3.0',
+                              height: 15/10, // 设置行高为15px
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        notification.title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              notification.read
-                                  ? Colors.grey[400]
-                                  : Colors.grey[900],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          notification.title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color:
+                                notification.read
+                                    ? Colors.grey[400]
+                                    : Colors.grey[900],
+                          ),
                         ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    notification.message,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color:
-                          notification.read
-                              ? Colors.grey[400]
-                              : Colors.grey[700],
+                        const Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${notification.date} ${notification.time}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      notification.message,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color:
+                            notification.read
+                                ? Colors.grey[400]
+                                : Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${notification.date} ${notification.time}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

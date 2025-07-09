@@ -89,4 +89,10 @@ class NotificationState extends GetxController {
     }
     _notifications.refresh();
   }
+
+  // 清空所有通知，便于开发测试无通知页面
+  void clearAllNotifications() {
+    _notifications.clear();
+    _notifications.refresh();
+  }
 } 
