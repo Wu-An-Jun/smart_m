@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../common/Global.dart';
 import '../common/amap_geofence_service.dart';
 import '../models/geofence_model.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 import 'geofence_creation_page.dart';
 
 /// 电子围栏管理页面
@@ -72,49 +73,33 @@ class _GeofenceManagementPageState extends State<GeofenceManagementPage> {
   }
 
   /// 删除围栏
-  void _deleteGeofence(GeofenceModel geofence) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white, // 使用全局主题背景色
-            title: const Text('删除围栏'),
-            content: Text('确定要删除围栏 "${geofence.name}" 吗？'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('取消'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final result = await _geofenceService.removeGeofence(geofence.id);
-                  if (result) {
-                    _loadGeofences();
-                    Navigator.of(context).pop();
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('已删除围栏 "${geofence.name}"'),
-                        backgroundColor: Colors.orange,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  } else {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('删除围栏失败'),
-                        backgroundColor: Colors.red,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                child: const Text('删除', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
+  void _deleteGeofence(GeofenceModel geofence) async {
+    final confirmed = await context.showDeleteConfirmation(
+      title: '删除电子围栏',
+      content: '确定要删除围栏 "${geofence.name}" 吗？删除后无法恢复。',
     );
+    
+    if (confirmed) {
+      final result = await _geofenceService.removeGeofence(geofence.id);
+      if (result) {
+        _loadGeofences();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('已删除围栏 "${geofence.name}"'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('删除围栏失败'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   /// 构建头部

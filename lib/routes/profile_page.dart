@@ -782,8 +782,8 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                       _buildInfoItem(
                         title: '头像',
                         content: Container(
-                          width: 70,
-                          height: 70,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -798,7 +798,7 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                           _showAvatarPickerOptions(context);
                         },
                       ),
-                      const Divider(),
+                      Divider(color: Colors.grey.shade300, height: 20),
                       _buildInfoItem(
                         title: '昵称',
                         content: Text(
@@ -989,7 +989,7 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                           );
                         },
                       ),
-                      const Divider(),
+                      Divider(color: Colors.grey.shade300, height: 20),
                       _buildInfoItem(
                         title: '手机',
                         content: Text(
@@ -1016,12 +1016,12 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
   Widget _buildAvatarInAccountPage() {
     final avatarPath = Global.userInfo['avatar'] ?? '';
     return avatarPath.isNotEmpty && File(avatarPath).existsSync()
-        ? Image.file(File(avatarPath), width: 60, height: 60, fit: BoxFit.cover)
+        ? Image.file(File(avatarPath), width: 40, height: 40, fit: BoxFit.cover)
         : Image.asset(
           'imgs/user_avatar.jpeg',
           fit: BoxFit.cover,
-          width: 60,
-          height: 60,
+          width: 40,
+          height: 40,
         );
   }
 
@@ -1044,7 +1044,9 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                 style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
             ),
-            Expanded(child: content),
+            Expanded(
+              child: Align(alignment: Alignment.centerRight, child: content),
+            ),
             const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
           ],
         ),

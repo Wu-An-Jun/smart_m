@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/device_controller.dart';
 import '../models/device_model.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 import 'device_management_page.dart';
 
 class DeviceListPage extends StatelessWidget {
@@ -279,23 +280,24 @@ class DeviceListPage extends StatelessWidget {
           ),
 
           // 操作按钮
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.grey),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            onSelected: (value) {
-              switch (value) {
-                case 'edit':
-                  _editDevice(device, controller);
-                  break;
-                case 'delete':
-                  _deleteDevice(device, controller);
-                  break;
-              }
-            },
-            itemBuilder:
-                (context) => [
+          Builder(
+            builder: (context) => PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.grey),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (value) {
+                switch (value) {
+                  case 'edit':
+                    _editDevice(device, controller);
+                    break;
+                  case 'delete':
+                    _deleteDevice(context, device, controller);
+                    break;
+                }
+              },
+              itemBuilder:
+                  (context) => [
                   const PopupMenuItem(
                     value: 'edit',
                     child: Row(
@@ -317,6 +319,7 @@ class DeviceListPage extends StatelessWidget {
                     ),
                   ),
                 ],
+            ),
           ),
         ],
       ),
@@ -376,24 +379,14 @@ class DeviceListPage extends StatelessWidget {
     );
   }
 
-  void _deleteDevice(DeviceModel device, DeviceController controller) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('删除设备'),
-        content: Text('确定要删除设备"${device.name}"吗？'),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('取消')),
-          ElevatedButton(
-            onPressed: () {
-              controller.deleteDevice(device.id);
-              Get.back();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('删除', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+  void _deleteDevice(BuildContext context, DeviceModel device, DeviceController controller) async {
+    final confirmed = await context.showDeleteConfirmation(
+      title: '删除设备',
+      content: '确定要删除设备"${device.name}"吗？删除后设备数据将无法恢复。',
     );
+    
+    if (confirmed) {
+      controller.deleteDevice(device.id);
+    }
   }
 }

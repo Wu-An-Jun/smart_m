@@ -18,7 +18,7 @@ class NotificationPage extends StatelessWidget {
 
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: Global.currentTheme.primaryColor,
+          backgroundColor: Global.currentTheme.backgroundColor,
           elevation: 0,
           title: Text(
             selectedNotification == null ? '消息通知' : '通知详情',
@@ -45,13 +45,15 @@ class NotificationPage extends StatelessWidget {
 
   Widget _buildNotificationList() {
     return Container(
-      color: const Color(0xFFF7F5FA),
+      color: Global.currentTheme.backgroundColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
+          //背景改为白色
+          color: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -65,7 +67,7 @@ class NotificationPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
+                        color: Colors.black,
                       ),
                     ),
                     GestureDetector(
@@ -157,10 +159,7 @@ class NotificationPage extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color:
-                    notification.read
-                        ? Colors.grey[300]
-                        : Global.currentTheme.primaryColor,
+                color: notification.read ? Colors.grey[300] : Color(0xFFD2B48C),
                 shape: BoxShape.circle,
               ),
               child: Stack(

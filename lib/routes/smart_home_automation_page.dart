@@ -3,6 +3,7 @@ import '../controllers/automation_controller.dart';
 import '../models/automation_model.dart';
 import '../widgets/automation_card.dart';
 import '../widgets/smart_home_layout.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 import 'automation_creation_page.dart';
 import '../common/Global.dart';
 
@@ -185,33 +186,18 @@ class _SmartHomeAutomationPageState extends State<SmartHomeAutomationPage> {
   }
 
   /// 删除自动化
-  void _deleteAutomation(int id) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: const Text('确定要删除这个自动化规则吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _controller.removeAutomation(id);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('自动化规则已删除')),
-              );
-            },
-            child: const Text(
-              '删除',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+  void _deleteAutomation(int id) async {
+    final confirmed = await context.showDeleteConfirmation(
+      title: '删除自动化规则',
+      content: '确定要删除这个自动化规则吗？删除后无法恢复。',
     );
+    
+    if (confirmed) {
+      _controller.removeAutomation(id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('自动化规则已删除')),
+      );
+    }
   }
 
   /// 加载示例数据

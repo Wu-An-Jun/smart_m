@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'app_routes.dart';
 import 'device_match_success_page.dart';
 import 'package:get/get.dart';
 import '../controllers/device_controller.dart';
 import '../models/device_model.dart';
+import '../widgets/center_popup.dart';
 import 'dart:math';
+
+/// 自定义大写文本格式化器
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
 
 /// 手动输入设备码页面
 class AddDeviceManualPage extends StatefulWidget {
@@ -26,15 +42,20 @@ class _AddDeviceManualPageState extends State<AddDeviceManualPage> {
   }
 
   /// 绑定设备并跳转到主页面并切换到设备管理Tab，替换当前页面
-  /// 如果设备码为空，弹出提示
+  /// 如果设备码为空或长度不正确，弹出提示
   Future<void> _onBind() async {
     final code = _codeController.text.trim();
+    
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入设备码')),
-      );
+      CenterPopup.show(context, '请输入设备码');
       return;
     }
+    
+    if (code.length != 14) {
+      CenterPopup.show(context, '设备码必须为14位');
+      return;
+    }
+
     final DeviceController controller = Get.find<DeviceController>();
     // 按顺序分配电量：绿80，黄40，红10
     final List<int> batteryLevels = [80, 40, 10];
@@ -132,17 +153,26 @@ class _AddDeviceManualPageState extends State<AddDeviceManualPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 14),
                       child: TextField(
                         controller: _codeController,
+                        maxLength: 14, // 限制最大长度为14位
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.characters, // 自动转换为大写
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')), // 只允许字母和数字
+                          UpperCaseTextFormatter(), // 自定义格式化器，转换为大写
+                        ],
                         decoration: const InputDecoration(
                           border: InputBorder.none,
-                          hintText: '请输入设备码',
+                          hintText: '请输入14位设备码',
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 16,
                           ),
+                          counterText: '', // 隐藏字符计数器
                         ),
                         style: const TextStyle(
                           color: Colors.black,
                           fontSize: 16,
+                          letterSpacing: 1.0, // 增加字符间距，便于阅读
                         ),
                       ),
                     ),
@@ -176,7 +206,7 @@ class _AddDeviceManualPageState extends State<AddDeviceManualPage> {
                           ),
                           const SizedBox(height: 5),
                           const Text(
-                            '设备码通常印在设备背面或包装盒上，以"PET-"开头，后跟8位字母数字组合',
+                            '设备码通常印在设备背面或包装盒上，为14位字母数字组合',
                             style: TextStyle(
                               color: Color(0xFF6B7280),
                               fontSize: 12,

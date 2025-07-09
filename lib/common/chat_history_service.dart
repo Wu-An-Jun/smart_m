@@ -157,63 +157,110 @@ class ChatHistoryService {
     final sessions = await getChatSessions();
     if (sessions.isEmpty) return [];
 
-    final Map<String, List<ChatSessionData>> groupedSessions = {};
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final sevenDaysAgo = today.subtract(const Duration(days: 7));
+    final thirtyDaysAgo = today.subtract(const Duration(days: 30));
+
+    // 分组存储
+    final Map<String, List<ChatSessionData>> groupedSessions = {
+      '今天': <ChatSessionData>[],
+      '昨天': <ChatSessionData>[],
+      '7天内': <ChatSessionData>[],
+      '30天内': <ChatSessionData>[],
+    };
+    
+    // 存储按月份分组的历史记录
+    final Map<String, List<ChatSessionData>> monthlyGroups = {};
 
     for (final session in sessions) {
       final sessionDate = session.lastMessageTime;
-      String groupKey;
+      final sessionDay = DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
 
-      if (sessionDate.year == now.year &&
-          sessionDate.month == now.month &&
-          sessionDate.day == now.day) {
-        groupKey = '今天';
-      } else if (sessionDate.year == now.year &&
-          sessionDate.month == now.month &&
-          sessionDate.day == now.day - 1) {
-        groupKey = '昨天';
-      } else if (sessionDate.year == now.year) {
-        groupKey = '${sessionDate.month}月${sessionDate.day}日';
+      if (sessionDay.isAtSameMomentAs(today)) {
+        // 今天
+        groupedSessions['今天']!.add(session);
+      } else if (sessionDay.isAtSameMomentAs(yesterday)) {
+        // 昨天
+        groupedSessions['昨天']!.add(session);
+      } else if (sessionDay.isAfter(sevenDaysAgo) && sessionDay.isBefore(yesterday)) {
+        // 7天内（不包含今天和昨天）
+        groupedSessions['7天内']!.add(session);
+      } else if (sessionDay.isAfter(thirtyDaysAgo) && sessionDay.isBefore(sevenDaysAgo.add(const Duration(days: 1)))) {
+        // 30天内（不包含前面的）
+        groupedSessions['30天内']!.add(session);
       } else {
-        groupKey = '${sessionDate.year}年${sessionDate.month}月${sessionDate.day}日';
+        // 更早的记录按月份分组
+        final monthKey = sessionDate.year == now.year 
+            ? '${sessionDate.month}月' 
+            : '${sessionDate.year}年${sessionDate.month}月';
+        
+        if (!monthlyGroups.containsKey(monthKey)) {
+          monthlyGroups[monthKey] = [];
+        }
+        monthlyGroups[monthKey]!.add(session);
       }
-
-      if (!groupedSessions.containsKey(groupKey)) {
-        groupedSessions[groupKey] = [];
-      }
-      groupedSessions[groupKey]!.add(session);
     }
 
-    // 按时间排序分组
-    final sortedGroups = <ChatHistoryGroup>[];
-    final groupOrder = ['今天', '昨天'];
+    // 构建最终分组列表
+    final List<ChatHistoryGroup> result = [];
     
-    // 先添加今天和昨天
-    for (final key in groupOrder) {
-      if (groupedSessions.containsKey(key)) {
-        sortedGroups.add(ChatHistoryGroup(
-          title: key,
-          sessions: groupedSessions[key]!,
+    // 按顺序添加固定分组（只添加非空的分组）
+    final fixedGroupOrder = ['今天', '昨天', '7天内', '30天内'];
+    for (final groupKey in fixedGroupOrder) {
+      final sessions = groupedSessions[groupKey]!;
+      if (sessions.isNotEmpty) {
+        // 按时间倒序排序会话
+        sessions.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+        result.add(ChatHistoryGroup(
+          title: groupKey,
+          sessions: sessions,
         ));
-        groupedSessions.remove(key);
       }
     }
     
-    // 然后添加其他日期，按时间倒序
-    final otherKeys = groupedSessions.keys.toList();
-    otherKeys.sort((a, b) {
-      // 简单的日期字符串比较，实际应用中可能需要更复杂的排序逻辑
-      return b.compareTo(a);
+    // 添加月份分组，按月份倒序排序
+    final monthKeys = monthlyGroups.keys.toList();
+    monthKeys.sort((a, b) {
+      // 解析月份字符串进行正确的时间排序
+      final aDate = _parseMonthKey(a);
+      final bDate = _parseMonthKey(b);
+      return bDate.compareTo(aDate);
     });
     
-    for (final key in otherKeys) {
-      sortedGroups.add(ChatHistoryGroup(
-        title: key,
-        sessions: groupedSessions[key]!,
+    for (final monthKey in monthKeys) {
+      final sessions = monthlyGroups[monthKey]!;
+      // 按时间倒序排序会话
+      sessions.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+      result.add(ChatHistoryGroup(
+        title: monthKey,
+        sessions: sessions,
       ));
     }
 
-    return sortedGroups;
+    return result;
+  }
+
+  /// 解析月份key为DateTime用于排序
+  DateTime _parseMonthKey(String monthKey) {
+    try {
+      if (monthKey.contains('年')) {
+        // 格式: "2024年12月"
+        final parts = monthKey.split('年');
+        final year = int.parse(parts[0]);
+        final month = int.parse(parts[1].replaceAll('月', ''));
+        return DateTime(year, month);
+      } else {
+        // 格式: "12月" (当前年)
+        final month = int.parse(monthKey.replaceAll('月', ''));
+        final currentYear = DateTime.now().year;
+        return DateTime(currentYear, month);
+      }
+    } catch (e) {
+      // 解析失败时返回最早时间
+      return DateTime(1970);
+    }
   }
 }
 

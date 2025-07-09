@@ -6,9 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:collection/collection.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:vibration/vibration.dart';
 
 import '../common/Global.dart';
@@ -106,23 +105,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       final args = Get.arguments;
       if (args != null && args['sessionId'] != null) {
         _currentSessionId = args['sessionId'] as String;
-        final history = await _chatHistoryService.getChatMessages(_currentSessionId!);
+        final history = await _chatHistoryService.getChatMessages(
+          _currentSessionId!,
+        );
         setState(() {
           _messages.clear();
-          _messages.addAll(history.map((m) => ChatMessage(
-            text: m.text,
-            isUser: m.isUser,
-            timestamp: m.timestamp,
-          )));
+          _messages.addAll(
+            history.map(
+              (m) => ChatMessage(
+                text: m.text,
+                isUser: m.isUser,
+                timestamp: m.timestamp,
+              ),
+            ),
+          );
         });
         // 自动修正会话标题
         final sessions = await _chatHistoryService.getChatSessions();
-        final session = sessions.firstWhereOrNull((s) => s.id == _currentSessionId);
+        final session = sessions.firstWhereOrNull(
+          (s) => s.id == _currentSessionId,
+        );
         if (session != null && session.title == '新建对话' && history.isNotEmpty) {
           final firstUserMsg = history.firstWhereOrNull((m) => m.isUser);
           if (firstUserMsg != null && firstUserMsg.text.trim().isNotEmpty) {
-            final shortTitle = firstUserMsg.text.length > 20 ? '${firstUserMsg.text.substring(0, 20)}...' : firstUserMsg.text;
-            await _chatHistoryService.updateSessionTitle(_currentSessionId!, shortTitle);
+            final shortTitle =
+                firstUserMsg.text.length > 20
+                    ? '${firstUserMsg.text.substring(0, 20)}...'
+                    : firstUserMsg.text;
+            await _chatHistoryService.updateSessionTitle(
+              _currentSessionId!,
+              shortTitle,
+            );
           }
         }
       }
@@ -975,15 +988,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1D35),
                   borderRadius: BorderRadius.circular(9999),
-                  boxShadow: _isListening
-                      ? [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.5),
-                            blurRadius: 16,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : [],
+                  boxShadow:
+                      _isListening
+                          ? [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.5),
+                              blurRadius: 16,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                          : [],
                 ),
                 child: Center(
                   child: SvgPicture.asset(
@@ -1125,6 +1139,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _buildDrawerItem(Icons.chat_bubble_outline, 'AI聊天历史', () {
                   Navigator.pop(context);
                   Get.toNamed(AppRoutes.aiChatHistory);
+                }),
+                _buildDrawerItem(Icons.data_usage, '生成测试数据', () {
+                  Navigator.pop(context);
+                  Get.toNamed('/test-chat-data');
                 }),
                 _buildDrawerItem(Icons.science, '智能管家测试', () {
                   Navigator.pop(context);

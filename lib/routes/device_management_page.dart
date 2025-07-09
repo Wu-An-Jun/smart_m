@@ -15,6 +15,7 @@ import '../widgets/center_popup.dart';
 import '../widgets/geofence_map_widget.dart';
 import '../widgets/more_settings_dialog.dart';
 import '../widgets/positioning_mode_selector.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 
 class DeviceManagementPage extends StatefulWidget {
   const DeviceManagementPage({super.key});
@@ -37,7 +38,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   final RxBool _remoteSwitch = false.obs;
 
   // 猫咪定位器的任务列表
-  final RxList<String> _tasks = <String>["宠物离开小区时给我发消息", "每天10点以后关闭定位"].obs;
+  final RxList<String> _tasks = <String>[].obs;
 
   // 控制是否显示添加设备界面
   final RxBool _showAddDeviceView = false.obs;
@@ -49,6 +50,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   void initState() {
     super.initState();
     controller.loadDevices();
+    _loadTasks();
     final arguments = Get.arguments as Map<String, dynamic>?;
     if (arguments != null && arguments['showAddDevice'] == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,6 +65,30 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
         _showCatLocator();
       });
     }
+  }
+
+  /// 加载任务持久化数据
+  Future<void> _loadTasks() async {
+    if (_currentDeviceId == null) {
+      _tasks.assignAll(["宠物离开小区时给我发消息", "每天10点以后关闭定位"]);
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final tasksJson = prefs.getString('smart_butler_tasks_${_currentDeviceId!}');
+    if (tasksJson != null) {
+      final List<String> list = tasksJson.split('\n');
+      _tasks.assignAll(list);
+    } else {
+      // 默认任务
+      _tasks.assignAll(["宠物离开小区时给我发消息", "每天10点以后关闭定位"]);
+    }
+  }
+
+  /// 保存任务到本地
+  Future<void> _saveTasks() async {
+    if (_currentDeviceId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('smart_butler_tasks_${_currentDeviceId!}', _tasks.join('\n'));
   }
 
   Future<void> _loadPersistedState() async {
@@ -98,8 +124,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     }
   }
 
-  /// 切换到猫咪定位器界面
-  void _showCatLocator() {
+  /// 切换到猫咪定位器界面（并加载对应任务）
+  void _showCatLocator({String? deviceId}) {
+    if (deviceId != null) {
+      _currentDeviceId = deviceId;
+    }
+    _loadTasks();
     _showCatLocatorView.value = true;
     _showPositioningModeSelector.value = false;
   }
@@ -122,6 +152,16 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
 
   /// 切换远程开关状态
   void _toggleRemoteSwitch() async {
+    if (_remoteSwitch.value) {
+      // 关闭时弹窗确认
+      final confirmed = await context.showDeleteConfirmation(
+        title: '关闭远程开关',
+        content: '关闭远程开关后，部分功能将不可用，确定要关闭吗？',
+        confirmText: '关闭',
+        isDangerous: true,
+      );
+      if (!confirmed) return;
+    }
     _remoteSwitch.value = !_remoteSwitch.value;
     await _saveRemoteSwitchState();
     if (!_remoteSwitch.value) {
@@ -148,6 +188,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   /// 移除任务
   void _removeTask(String task) {
     _tasks.remove(task);
+    _saveTasks();
   }
 
   /// 显示更多设置弹窗
@@ -686,7 +727,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     if (device.type == DeviceType.petTracker) {
       _currentDeviceId = device.id;
       _loadPersistedState();
-      _showCatLocator();
+      _showCatLocator(deviceId: device.id);
     } else {
       Get.toNamed(AppRoutes.deviceDetail, arguments: device);
     }
@@ -1326,7 +1367,17 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
             ),
           ),
           GestureDetector(
-            onTap: isRemoteSwitchOff ? null : onTap,
+            onTap: isRemoteSwitchOff
+                ? null
+                : () async {
+                    final confirmed = await context.showDeleteConfirmation(
+                      title: '删除任务',
+                      content: '确定要删除该任务吗？删除后无法恢复。',
+                    );
+                    if (confirmed) {
+                      onTap();
+                    }
+                  },
             child: SvgPicture.asset(
               svgPath,
               width: 20,
