@@ -40,4 +40,9 @@ abstract class AppRoutes {
   static const amapGeofenceTest = '/amap-geofence-test';
   static const splash = '/splash';
   static const addDeviceManual = '/add_device_manual';
+  static const faqHelpAddDevice = '/faq-help-add-device';
+  static const faqHelpDeletedDevice = '/faq-help-deleted-device';
+  static const faqHelpWifi = '/faq-help-wifi';
+  static const faqHelpFirmware = '/faq-help-firmware';
+  static const faqHelpLocation = '/faq-help-location';
 } 

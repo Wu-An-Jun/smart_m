@@ -26,6 +26,11 @@ import 'package:test_rec/routes/toggle_button_demo_page.dart';
 import 'package:test_rec/routes/splash_page.dart';
 import 'add_device_manual_page.dart';
 import '../generate_test_chat_data.dart';
+import 'faq_help_add_device_page.dart';
+import 'faq_help_deleted_device_page.dart';
+import 'faq_help_wifi_page.dart';
+import 'faq_help_firmware_page.dart';
+import 'faq_help_location_page.dart';
 
 abstract class AppPages {
   static final routes = [
@@ -90,5 +95,10 @@ abstract class AppPages {
     ),
     GetPage(name: AppRoutes.splash, page: () => const SplashPage()),
     GetPage(name: '/test-chat-data', page: () => const ChatTestDataPage()),
+    GetPage(name: AppRoutes.faqHelpAddDevice, page: () => const FaqHelpAddDevicePage()),
+    GetPage(name: AppRoutes.faqHelpDeletedDevice, page: () => const FaqHelpDeletedDevicePage()),
+    GetPage(name: AppRoutes.faqHelpWifi, page: () => const FaqHelpWifiPage()),
+    GetPage(name: AppRoutes.faqHelpFirmware, page: () => const FaqHelpFirmwarePage()),
+    GetPage(name: AppRoutes.faqHelpLocation, page: () => const FaqHelpLocationPage()),
   ];
 }
