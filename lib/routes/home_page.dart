@@ -286,6 +286,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: IconButton(
                 icon: const Icon(Icons.add, color: Color(0xFF0F172A), size: 20),
                 onPressed: () {
+                  // 先自动向AI发送“我要绑定设备”
+                  _sendMessage('我要绑定设备');
+                  // 跳转到设备管理页并传递参数，由设备管理页切换到添加设备界面
                   Get.toNamed(
                     '/device-management',
                     arguments: {'showAddDevice': true},
@@ -504,11 +507,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: _buildServiceOption(
                 icon: Icons.add_circle_outline,
                 label: '添加设备',
-                onTap:
-                    () => Get.toNamed(
-                      '/device-management',
-                      arguments: {'showAddDevice': true},
-                    ),
+                onTap: () {
+                  // 先自动向AI发送“我要绑定设备”
+                  _sendMessage('我要绑定设备');
+                  // 跳转到设备管理页并传递参数，由设备管理页切换到添加设备界面
+                  Get.toNamed(
+                    '/device-management',
+                    arguments: {'showAddDevice': true},
+                  );
+                },
               ),
             ),
           ],
@@ -714,6 +721,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     compactMode: false,
                   ),
                   onHeaderTap: () {
+                    _sendMessage('我要进入定位器详细界面');
                     DeviceTapHandler.handleDeviceTap(context, device);
                   },
                 );
