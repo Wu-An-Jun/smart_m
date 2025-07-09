@@ -67,6 +67,19 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     }
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final arguments = Get.arguments as Map<String, dynamic>?;
+    if (arguments != null && arguments['deviceId'] != null) {
+      if (_currentDeviceId != arguments['deviceId']) {
+        _currentDeviceId = arguments['deviceId'];
+        _loadPersistedState();
+        _showCatLocator(deviceId: _currentDeviceId);
+      }
+    }
+  }
+
   /// 加载任务持久化数据
   Future<void> _loadTasks() async {
     if (_currentDeviceId == null) {

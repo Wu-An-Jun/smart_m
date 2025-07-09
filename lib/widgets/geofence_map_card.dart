@@ -31,6 +31,7 @@ class GeofenceMapCard extends StatefulWidget {
   final GeofenceMapConfig mapConfig;
   final Function(GeofenceEvent)? onGeofenceEvent;
   final VoidCallback? onTap;
+  final VoidCallback? onHeaderTap; // 新增
   final List<GeofenceModel>? customGeofences;
 
   const GeofenceMapCard({
@@ -39,6 +40,7 @@ class GeofenceMapCard extends StatefulWidget {
     GeofenceMapConfig? mapConfig,
     this.onGeofenceEvent,
     this.onTap,
+    this.onHeaderTap, // 新增
     this.customGeofences,
   }) : mapConfig = mapConfig ?? const GeofenceMapConfig(
           showStatus: false,
@@ -105,90 +107,88 @@ class _GeofenceMapCardState extends State<GeofenceMapCard> {
 
   /// 构建卡片头部
   Widget _buildCardHeader() {
-    return Row(
-      children: [
-        // 图标
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Global.currentTheme.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: widget.onHeaderTap,
+      child: Row(
+        children: [
+          // 图标
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Global.currentTheme.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              widget.cardConfig.icon,
+              color: Global.currentTheme.primaryColor,
+              size: 24,
+            ),
           ),
-          child: Icon(
-            widget.cardConfig.icon,
-            color: Global.currentTheme.primaryColor,
-            size: 24,
-          ),
-        ),
-        
-        const SizedBox(width: 12),
-        
-        // 标题和副标题
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.cardConfig.title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Global.currentTextColor,
-                ),
-              ),
-              if (widget.cardConfig.subtitle.isNotEmpty) ...[
-                const SizedBox(height: 2),
+          const SizedBox(width: 12),
+          // 标题和副标题
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  widget.cardConfig.subtitle,
+                  widget.cardConfig.title,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Global.currentTheme.isDark ? Colors.grey[400] : Colors.grey[600],
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Global.currentTextColor,
+                  ),
+                ),
+                if (widget.cardConfig.subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.cardConfig.subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Global.currentTheme.isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // 控制按钮
+          if (widget.cardConfig.showControls)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 事件计数徽章
+                if (_eventCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$_eventCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                // 更多按钮
+                IconButton(
+                  onPressed: widget.onTap,
+                  icon: const Icon(Icons.more_vert),
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
                   ),
                 ),
               ],
-            ],
-          ),
-        ),
-        
-        // 控制按钮
-        if (widget.cardConfig.showControls)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 事件计数徽章
-              if (_eventCount > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$_eventCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              
-              const SizedBox(width: 8),
-              
-              // 更多按钮
-              IconButton(
-                onPressed: widget.onTap,
-                icon: const Icon(Icons.more_vert),
-                iconSize: 20,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 32,
-                  minHeight: 32,
-                ),
-              ),
-            ],
-          ),
-      ],
+            ),
+        ],
+      ),
     );
   }
 

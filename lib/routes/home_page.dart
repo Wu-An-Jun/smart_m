@@ -17,6 +17,8 @@ import '../common/page_navigator.dart';
 import '../widgets/geofence_map_card.dart';
 import 'app_routes.dart';
 import 'geofence_demo_page.dart';
+import '../controllers/device_controller.dart';
+import '../models/device_model.dart';
 
 class ChatMessage {
   final String text;
@@ -72,6 +74,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late stt.SpeechToText _speech;
   bool _isListening = false;
   String _voiceInput = '';
+
+  final DeviceController _deviceController = Get.put(DeviceController());
+  int _currentDevicePage = 0;
+  final PageController _devicePageController = PageController();
 
   @override
   void initState() {
@@ -154,6 +160,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _scrollController.dispose();
     _messageController.dispose();
     _focusNode.dispose();
+    _devicePageController.dispose();
     super.dispose();
   }
 
@@ -659,27 +666,81 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  /// 构建地理围栏状态卡片
+  /// 构建地理围栏状态卡片（多设备分页）
   Widget _buildGeofenceStatusCard() {
+    final List<DeviceModel> petTrackers = _deviceController.getDevicesByType(DeviceType.petTracker);
+    if (petTrackers.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: GeofenceMapCard(
+          cardConfig: GeofenceCardConfig(
+            title: '暂无定位器',
+            subtitle: '请先绑定定位器设备',
+            icon: Icons.location_on,
+            backgroundColor: const Color(0xFF1E293B),
+            height: 350,
+            showControls: false,
+            compactMode: false,
+          ),
+        ),
+      );
+    }
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: GeofenceMapCard(
-        cardConfig: GeofenceCardConfig(
-          title: '地理围栏状态',
-          subtitle: '实时位置监控',
-          icon: Icons.location_on,
-          backgroundColor: const Color(0xFF1E293B),
-          height: 350,
-          showControls: true,
-          compactMode: false,
-        ),
-        onTap: () {
-          Get.toNamed(
-            '/device-management',
-            arguments: {'showCatLocator': true},
-          );
-        },
+      child: Column(
+        children: [
+          SizedBox(
+            height: 370,
+            child: PageView.builder(
+              controller: _devicePageController,
+              itemCount: petTrackers.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentDevicePage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final device = petTrackers[index];
+                return GeofenceMapCard(
+                  cardConfig: GeofenceCardConfig(
+                    title: device.name,
+                    subtitle: '实时位置监控',
+                    icon: Icons.location_on,
+                    backgroundColor: const Color(0xFF1E293B),
+                    height: 350,
+                    showControls: true,
+                    compactMode: false,
+                  ),
+                  onHeaderTap: () {
+                    DeviceTapHandler.handleDeviceTap(context, device);
+                  },
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildDevicePageIndicator(petTrackers.length, _currentDevicePage),
+        ],
       ),
+    );
+  }
+
+  /// 分页指示器（常规圆点）
+  Widget _buildDevicePageIndicator(int count, int current) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: index == current ? const Color(0xFF3B82F6) : const Color(0xFF64748B),
+          ),
+        );
+      }),
     );
   }
 
@@ -1471,6 +1532,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _isListening = false;
       });
+    }
+  }
+}
+
+// 新增：设备点击处理工具类
+class DeviceTapHandler {
+  static void handleDeviceTap(BuildContext context, DeviceModel device) {
+    if (device.type == DeviceType.petTracker) {
+      // 这里直接跳转到猫咪定位器界面，参数传递deviceId
+      Navigator.of(context).pushNamed(
+        '/device-management',
+        arguments: {'showCatLocator': true, 'deviceId': device.id},
+      );
+    } else {
+      Navigator.of(context).pushNamed(
+        '/device-detail',
+        arguments: device,
+      );
     }
   }
 }
