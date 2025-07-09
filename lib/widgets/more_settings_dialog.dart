@@ -59,10 +59,9 @@ class MoreSettingsDialog extends StatelessWidget {
             children: [
               // 标题栏
               _buildHeader(context),
-
               // 内容区域
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
                 child: _buildActionButtons(context),
               ),
             ],
@@ -111,38 +110,48 @@ class MoreSettingsDialog extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 21.5, left: 20, right: 16.33),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildActionButton(
             context: context,
             svgAsset: 'imgs/notification_setting_wake.svg',
             label: '远程唤醒',
             backgroundColor: const Color(0xFF3B82F6),
-            onTap: () {
-              Navigator.of(context).pop();
-              onRemoteWakeup?.call();
+            onTap: () async {
+              final bool confirmed = await _showConfirmDialog(context, '远程唤醒');
+              if (confirmed) {
+                Navigator.of(context).pop();
+                onRemoteWakeup?.call();
+              }
             },
           ),
-          const SizedBox(width: 14),
           _buildActionButton(
             context: context,
             svgAsset: 'imgs/notification_setting_restart.svg',
             label: '一键重启',
             backgroundColor: const Color(0xFF22C55E),
-            onTap: () {
-              Navigator.of(context).pop();
-              onOneKeyRestart?.call();
+            onTap: () async {
+              final bool confirmed = await _showConfirmDialog(context, '一键重启');
+              if (confirmed) {
+                Navigator.of(context).pop();
+                onOneKeyRestart?.call();
+              }
             },
           ),
-          const SizedBox(width: 14),
           _buildActionButton(
             context: context,
             svgAsset: 'imgs/notification_setting_reset.svg',
             label: '恢复出厂设置',
             backgroundColor: const Color(0xFFF97316),
-            onTap: () {
-              Navigator.of(context).pop();
-              _showFactoryResetConfirm(context);
+            onTap: () async {
+              final bool confirmed = await _showConfirmDialog(
+                context,
+                '恢复出厂设置',
+              );
+              if (confirmed) {
+                Navigator.of(context).pop();
+                _showFactoryResetConfirm(context);
+              }
             },
           ),
         ],
@@ -182,7 +191,7 @@ class MoreSettingsDialog extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          width: 56,
+          width: 80,
           child: Text(
             label,
             style: const TextStyle(
@@ -256,5 +265,60 @@ class MoreSettingsDialog extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// 弹出二次确认对话框
+  Future<bool> _showConfirmDialog(
+    BuildContext context,
+    String actionLabel,
+  ) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: Colors.white, // 明确设置背景为白色
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.help_outline,
+                    color: Colors.blue.shade400,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '操作确认',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: Text(
+                '确定要执行【$actionLabel】操作吗？',
+                style: const TextStyle(fontSize: 14),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('取消', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade400,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('确定'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 }

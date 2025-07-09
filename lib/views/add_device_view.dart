@@ -140,13 +140,19 @@ class AddDeviceView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Expanded(
             child: _buildActionCard(
               svgUrl: 'action_scan.svg',
               title: '扫码绑定',
               subtitle: '扫描设备二维码',
-              onTap: () => _onQrCodeAdd(context, controller),
+              onTap: () async {
+                final bool confirmed = await _showConfirmDialog(context, '扫码绑定');
+                if (confirmed) {
+                  _onQrCodeAdd(context, controller);
+                }
+              },
               bgColor: const Color(0xFFF3F4F6),
             ),
           ),
@@ -156,7 +162,12 @@ class AddDeviceView extends StatelessWidget {
               svgUrl: 'action_manual.svg',
               title: '手动输入',
               subtitle: '输入设备序列号',
-              onTap: () => Navigator.of(context).pushNamed('/add_device_manual'),
+              onTap: () async {
+                final bool confirmed = await _showConfirmDialog(context, '手动输入');
+                if (confirmed) {
+                  Navigator.of(context).pushNamed('/add_device_manual');
+                }
+              },
               bgColor: const Color(0x4DFA9015),
             ),
           ),
@@ -166,13 +177,61 @@ class AddDeviceView extends StatelessWidget {
               svgUrl: 'device_card_icon.svg',
               title: '添加定位器',
               subtitle: '一键添加定位器',
-              onTap: () => _onAddPetTracker(context, controller),
+              onTap: () async {
+                final bool confirmed = await _showConfirmDialog(context, '添加定位器');
+                if (confirmed) {
+                  _onAddPetTracker(context, controller);
+                }
+              },
               bgColor: const Color(0xFFB3E5FC),
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// 弹出二次确认对话框
+  Future<bool> _showConfirmDialog(BuildContext context, String actionLabel) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.help_outline, color: Colors.blue.shade400, size: 24),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '操作确认',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: Text('确定要执行【$actionLabel】操作吗？', style: const TextStyle(fontSize: 14)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('取消', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade400,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('确定'),
+                ),
+              ],
+            );
+          },
+        ) ?? false;
   }
 
   Widget _buildActionCard({
