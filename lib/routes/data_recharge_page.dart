@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DataRechargePage extends StatefulWidget {
   const DataRechargePage({super.key});
@@ -11,6 +12,8 @@ class DataRechargePage extends StatefulWidget {
 class _DataRechargePageState extends State<DataRechargePage> {
   String selectedPackage = '100G';
   double selectedPrice = 95.0;
+  final TextEditingController _simCardController = TextEditingController();
+  static const String _simCardKey = 'sim_card_number';
 
   final List<DataPackage> packages = [
     DataPackage(
@@ -25,6 +28,23 @@ class _DataRechargePageState extends State<DataRechargePage> {
     DataPackage(data: '10G', price: 18.0),
     DataPackage(data: '3G', price: 10.0),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSimCardNumber();
+  }
+
+  Future<void> _loadSimCardNumber() async {
+    final prefs = await SharedPreferences.getInstance();
+    final simCard = prefs.getString(_simCardKey) ?? '3000 **** 9910';
+    _simCardController.text = simCard;
+  }
+
+  Future<void> _saveSimCardNumber(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_simCardKey, value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,12 +96,22 @@ class _DataRechargePageState extends State<DataRechargePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            '3000 **** 9910',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+          Expanded(
+            child: TextField(
+              controller: _simCardController,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              onChanged: (value) {
+                _saveSimCardNumber(value);
+              },
             ),
           ),
           Text('流量卡号', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
@@ -446,6 +476,12 @@ class _DataRechargePageState extends State<DataRechargePage> {
         },
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _simCardController.dispose();
+    super.dispose();
   }
 }
 
