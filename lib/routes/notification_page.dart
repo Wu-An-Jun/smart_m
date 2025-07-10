@@ -264,29 +264,14 @@ class NotificationPage extends StatelessWidget {
                     ),
                     if (!notification.read)
                       Positioned(
-                        top: -4,
-                        right: -4,
+                        top: -0,
+                        right: -0,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
+                          width: 9,
+                          height: 9,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFFF9500),
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(8),
-                              bottomLeft: Radius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            '推荐',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Alibaba PuHuiTi 3.0',
-                              height: 15/10, // 设置行高为15px
-                            ),
+                            color: Colors.red,
+                            shape: BoxShape.circle,
                           ),
                         ),
                       ),

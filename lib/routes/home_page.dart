@@ -78,6 +78,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final DeviceController _deviceController = Get.put(DeviceController());
   int _currentDevicePage = 0;
   final PageController _devicePageController = PageController();
+  bool _hasAutoNavigated = false; // 标记本轮会话是否已自动跳转
 
   @override
   void initState() {
@@ -887,6 +888,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   /// 构建AI消息内容
   Widget _buildAIMessageContent(ChatMessage message) {
     if (message.navigationInfo != null) {
+      // 如果未自动跳转过，自动执行导航
+      if (!_hasAutoNavigated) {
+        _hasAutoNavigated = true;
+        // 延迟执行，确保UI渲染完成
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          PageNavigator.navigateToPage(message.navigationInfo!.pageCode);
+        });
+      }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -899,7 +908,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ],
           PageNavigator.createNavigationButton(
             message.navigationInfo!.pageCode,
-            buttonText: '打开${message.navigationInfo!.pageName}',
+            buttonText: '打开 ${message.navigationInfo!.pageName}',
           ),
         ],
       );
@@ -1330,6 +1339,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _messageController.clear();
       _isTyping = true;
       _autoScrollEnabled = true;
+      _hasAutoNavigated = false; // 每次新消息重置自动跳转标记
     });
 
     // 保存用户消息到历史记录
