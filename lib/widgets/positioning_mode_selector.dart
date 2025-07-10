@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../common/Global.dart';
 
@@ -29,6 +30,7 @@ class ModeOption {
 
 /// 定位模式选择器组件
 class PositioningModeSelector extends StatefulWidget {
+  final String deviceId; // 设备ID，必填
   final PositioningMode initialMode;
   final Function(PositioningMode)? onModeChanged;
   final VoidCallback? onCancel;
@@ -36,6 +38,7 @@ class PositioningModeSelector extends StatefulWidget {
 
   const PositioningModeSelector({
     super.key,
+    required this.deviceId,
     this.initialMode = PositioningMode.normal,
     this.onModeChanged,
     this.onCancel,
@@ -79,10 +82,30 @@ class _PositioningModeSelectorState extends State<PositioningModeSelector> {
     ),
   ];
 
+  String get _prefsKey => 'selected_positioning_mode_${widget.deviceId}';
+
   @override
   void initState() {
     super.initState();
     _selectedMode = widget.initialMode;
+    _loadSelectedMode(); // 加载已保存的定位模式
+  }
+
+  /// 加载已保存的定位模式
+  Future<void> _loadSelectedMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final int? modeIndex = prefs.getInt(_prefsKey);
+    if (modeIndex != null && modeIndex >= 0 && modeIndex < PositioningMode.values.length) {
+      setState(() {
+        _selectedMode = PositioningMode.values[modeIndex];
+      });
+    }
+  }
+
+  /// 保存当前选中的定位模式
+  Future<void> _saveSelectedMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_prefsKey, _selectedMode.index);
   }
 
   @override
@@ -236,7 +259,10 @@ class _PositioningModeSelectorState extends State<PositioningModeSelector> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: widget.onConfirm,
+              onTap: () async {
+                await _saveSelectedMode(); // 持久化保存
+                widget.onConfirm?.call();
+              },
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A73E8),

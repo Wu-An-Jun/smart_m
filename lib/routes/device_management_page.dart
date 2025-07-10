@@ -1414,6 +1414,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
           // 定位模式选择器内容
           Expanded(
             child: PositioningModeSelector(
+              deviceId: _currentDeviceId ?? '',
               initialMode: PositioningMode.normal,
               onModeChanged: (mode) {
                 // 处理模式变更
