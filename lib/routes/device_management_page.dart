@@ -10,13 +10,13 @@ import '../controllers/device_controller.dart';
 import '../models/device_model.dart';
 import '../routes/app_routes.dart';
 import '../routes/geofence_management_page.dart';
+import '../states/notification_state.dart';
 import '../views/add_device_view.dart';
 import '../widgets/center_popup.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 import '../widgets/geofence_map_widget.dart';
 import '../widgets/more_settings_dialog.dart';
 import '../widgets/positioning_mode_selector.dart';
-import '../widgets/delete_confirmation_dialog.dart';
-import '../states/notification_state.dart';
 
 class DeviceManagementPage extends StatefulWidget {
   const DeviceManagementPage({super.key});
@@ -88,7 +88,9 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
-    final tasksJson = prefs.getString('smart_butler_tasks_${_currentDeviceId!}');
+    final tasksJson = prefs.getString(
+      'smart_butler_tasks_${_currentDeviceId!}',
+    );
     if (tasksJson != null) {
       final List<String> list = tasksJson.split('\n');
       _tasks.assignAll(list);
@@ -102,7 +104,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   Future<void> _saveTasks() async {
     if (_currentDeviceId == null) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('smart_butler_tasks_${_currentDeviceId!}', _tasks.join('\n'));
+    await prefs.setString(
+      'smart_butler_tasks_${_currentDeviceId!}',
+      _tasks.join('\n'),
+    );
   }
 
   Future<void> _loadPersistedState() async {
@@ -114,7 +119,9 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     } else {
       _remoteSwitch.value = true; // 默认开启
     }
-    final disconnectStr = prefs.getString('disconnect_time_${_currentDeviceId!}');
+    final disconnectStr = prefs.getString(
+      'disconnect_time_${_currentDeviceId!}',
+    );
     if (disconnectStr != null) {
       _disconnectTime = DateTime.tryParse(disconnectStr);
     } else {
@@ -125,7 +132,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   Future<void> _saveRemoteSwitchState() async {
     if (_currentDeviceId == null) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('remote_switch_${_currentDeviceId!}', _remoteSwitch.value);
+    await prefs.setBool(
+      'remote_switch_${_currentDeviceId!}',
+      _remoteSwitch.value,
+    );
   }
 
   Future<void> _saveDisconnectTime() async {
@@ -134,7 +144,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     if (_disconnectTime == null) {
       await prefs.remove('disconnect_time_${_currentDeviceId!}');
     } else {
-      await prefs.setString('disconnect_time_${_currentDeviceId!}', _disconnectTime!.toIso8601String());
+      await prefs.setString(
+        'disconnect_time_${_currentDeviceId!}',
+        _disconnectTime!.toIso8601String(),
+      );
     }
   }
 
@@ -445,23 +458,24 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                     ),
                     // 只有有未读通知时才显示红点
                     Obx(() {
-                      final notificationState = Get.isRegistered<NotificationState>()
-                          ? Get.find<NotificationState>()
-                          : Get.put(NotificationState());
+                      final notificationState =
+                          Get.isRegistered<NotificationState>()
+                              ? Get.find<NotificationState>()
+                              : Get.put(NotificationState());
                       final hasUnread = notificationState.hasUnread;
                       return hasUnread
                           ? Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
                               ),
-                            )
+                            ),
+                          )
                           : const SizedBox.shrink();
                     }),
                   ],
@@ -588,12 +602,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
       onTap: () => _handleDeviceItemTap(device),
       child: Container(
         decoration: BoxDecoration(
-          color: Global.currentTheme.surfaceColor.withOpacity(0.7),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(
+        child: Stack(
           children: [
-            // 设备信息行
+            // 设备信息行（原有Row，去掉状态栏Row）
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -614,7 +628,6 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                     ),
                   ),
                   const SizedBox(width: 16),
-
                   // 设备信息
                   Expanded(
                     child: Column(
@@ -625,7 +638,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: Color(0xFF222222),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -636,7 +649,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                               snapshot.data ?? device.description ?? '获取位置中...',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: Colors.white70,
+                                color: Color(0xFF666666),
                               ),
                             );
                           },
@@ -646,7 +659,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                           children: [
                             Icon(
                               Icons.access_time,
-                              color: Colors.white60,
+                              color: Color(0xFF999999),
                               size: 12,
                             ),
                             const SizedBox(width: 4),
@@ -654,7 +667,7 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                               _formatLastSeen(device.lastSeen),
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.white60,
+                                color: Color(0xFF999999),
                               ),
                             ),
                           ],
@@ -662,45 +675,39 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                       ],
                     ),
                   ),
-
-                  // 信号和电池状态、连接状态 垂直排列
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // 电量百分比
-                      Text(
-                        _getBatteryLevel(device),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: _getBatteryColor(device),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      // 电池图标
-                      Icon(
-                        _getBatteryIcon(device),
-                        color: _getBatteryColor(device),
-                        size: 16,
-                      ),
-                      const SizedBox(height: 8),
-                      // wifi图标
-                      Icon(
-                        device.isOnline ? Icons.wifi : Icons.wifi_off,
-                        color: device.isOnline ? Colors.green : Colors.grey,
-                        size: 16,
-                      ),
-                      const SizedBox(height: 8),
-                      // 编辑设备名称按钮
-                      // GestureDetector(
-                      //   onTap: () => _showRenameDeviceDialog(device),
-                      //   child: const Icon(
-                      //     Icons.edit,
-                      //     color: Colors.white70,
-                      //     size: 20,
-                      //   ),
-                      // ),
-                    ],
+                ],
+              ),
+            ),
+            // 状态栏Row放右上角
+            Positioned(
+              top: 5,
+              right: 5,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Transform.translate(
+                    offset: const Offset(0, -1.5), // 向上移动4个像素
+                    child: Icon(
+                      device.isOnline ? Icons.wifi : Icons.wifi_off,
+                      color: device.isOnline ? Colors.blue : Colors.grey,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    _getBatteryLevel(device),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: _getBatteryColor(device),
+                    ),
+                  ),
+                  // const SizedBox(width: 0),
+                  Icon(
+                    _getBatteryIcon(device),
+                    color: _getBatteryColor(device),
+                    size: 16,
                   ),
                 ],
               ),
@@ -959,9 +966,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
   Widget _buildMapSection() {
     if (!_remoteSwitch.value) {
       // 断开样式
-      final String timeStr = _disconnectTime == null
-          ? ''
-          : _formatDisconnectTime(_disconnectTime!);
+      final String timeStr =
+          _disconnectTime == null
+              ? ''
+              : _formatDisconnectTime(_disconnectTime!);
       return Container(
         height: 300,
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1051,7 +1059,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
               right: 0,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(6),
@@ -1234,8 +1245,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
     Color? iconColor,
   }) {
     final bool isRemoteSwitch = label == '远程开关';
-    final bool isRemoteSwitchOff = isRemoteSwitch && iconColor == const Color(0xFFBDBDBD);
-    final bool isDisableByRemote = !isRemoteSwitch && !_remoteSwitch.value && (label == '电子围栏' || label == '定位模式' || label == '更多设置');
+    final bool isRemoteSwitchOff =
+        isRemoteSwitch && iconColor == const Color(0xFFBDBDBD);
+    final bool isDisableByRemote =
+        !isRemoteSwitch &&
+        !_remoteSwitch.value &&
+        (label == '电子围栏' || label == '定位模式' || label == '更多设置');
     return Expanded(
       child: GestureDetector(
         onTap: isDisableByRemote ? null : onTap, // 远程开关始终可点
@@ -1249,22 +1264,27 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isRemoteSwitchOff
-                      ? const Color(0x99D1D5DB)
-                      : isDisableByRemote
+                  color:
+                      isRemoteSwitchOff
+                          ? const Color(0x99D1D5DB)
+                          : isDisableByRemote
                           ? const Color(0xFFF3F4F6)
                           : bgColor,
                   borderRadius: BorderRadius.circular(9999),
                 ),
-                padding: isRemoteSwitchOff ? const EdgeInsets.all(12) : EdgeInsets.zero,
+                padding:
+                    isRemoteSwitchOff
+                        ? const EdgeInsets.all(12)
+                        : EdgeInsets.zero,
                 child: Center(
                   child: SvgPicture.asset(
                     isRemoteSwitchOff ? 'imgs/automation_icon.svg' : svgPath,
                     width: isRemoteSwitchOff ? 24 : 20,
                     height: isRemoteSwitchOff ? 24 : 20,
-                    color: isRemoteSwitchOff
-                        ? const Color(0xFF6B7280)
-                        : isDisableByRemote
+                    color:
+                        isRemoteSwitchOff
+                            ? const Color(0xFF6B7280)
+                            : isDisableByRemote
                             ? const Color(0xFFD1D5DB)
                             : iconColor,
                   ),
@@ -1274,9 +1294,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
               Text(
                 label,
                 style: TextStyle(
-                  color: isRemoteSwitchOff
-                      ? const Color(0xFF1F2937)
-                      : isDisableByRemote
+                  color:
+                      isRemoteSwitchOff
+                          ? const Color(0xFF1F2937)
+                          : isDisableByRemote
                           ? const Color(0xFF9CA3AF)
                           : const Color(0xFF1F2937),
                   fontSize: 14,
@@ -1379,7 +1400,10 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
             child: Text(
               task,
               style: TextStyle(
-                color: isRemoteSwitchOff ? const Color(0xFF9CA3AF) : const Color(0xFF1F2937),
+                color:
+                    isRemoteSwitchOff
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF1F2937),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 fontFamily: 'Alibaba PuHuiTi 3.0',
@@ -1390,22 +1414,26 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
             ),
           ),
           GestureDetector(
-            onTap: isRemoteSwitchOff
-                ? null
-                : () async {
-                    final confirmed = await context.showDeleteConfirmation(
-                      title: '删除任务',
-                      content: '确定要删除该任务吗？删除后无法恢复。',
-                    );
-                    if (confirmed) {
-                      onTap();
-                    }
-                  },
+            onTap:
+                isRemoteSwitchOff
+                    ? null
+                    : () async {
+                      final confirmed = await context.showDeleteConfirmation(
+                        title: '删除任务',
+                        content: '确定要删除该任务吗？删除后无法恢复。',
+                      );
+                      if (confirmed) {
+                        onTap();
+                      }
+                    },
             child: SvgPicture.asset(
               svgPath,
               width: 20,
               height: 20,
-              color: isRemoteSwitchOff ? const Color(0xFFD1D5DB) : const Color(0xFF9CA3AF),
+              color:
+                  isRemoteSwitchOff
+                      ? const Color(0xFFD1D5DB)
+                      : const Color(0xFF9CA3AF),
             ),
           ),
         ],
@@ -1669,7 +1697,12 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
         color: const Color(0xE6F59E0B), // #F59E0B, 90%不透明
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: const EdgeInsets.only(left: 12, right: 19.82, top: 12, bottom: 12),
+      padding: const EdgeInsets.only(
+        left: 12,
+        right: 19.82,
+        top: 12,
+        bottom: 12,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
