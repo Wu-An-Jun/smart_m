@@ -20,6 +20,7 @@ import '../widgets/geofence_map_card.dart';
 import 'app_routes.dart';
 import 'geofence_demo_page.dart';
 import '../states/notification_state.dart';
+import '../common/voice_input_service.dart';
 
 class ChatMessage {
   final String text;
@@ -72,9 +73,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // 模拟设备数据
   List<Map<String, dynamic>> _mockDevices = [];
 
-  late stt.SpeechToText _speech;
-  bool _isListening = false;
-  String _voiceInput = '';
+  final VoiceInputService _voiceInputService = VoiceInputService();
+  bool _isRecording = false;
+  String? _audioFilePath;
 
   final DeviceController _deviceController = Get.put(DeviceController());
   int _currentDevicePage = 0;
@@ -106,8 +107,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     _animationController.forward();
-
-    _speech = stt.SpeechToText();
 
     // 检查是否有 sessionId 参数，有则加载历史消息
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1068,17 +1067,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(9999),
             ),
             child: GestureDetector(
-              onLongPress: _startListening,
-              onLongPressUp: () => _stopListening(cancel: true),
+              onLongPress: _startRecording,
+              onLongPressUp: () => _stopRecordingAndRecognize(cancel: false),
+              onLongPressCancel: () => _stopRecordingAndRecognize(cancel: true),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: _isListening ? 48 : 40,
-                height: _isListening ? 48 : 40,
+                width: _isRecording ? 48 : 40,
+                height: _isRecording ? 48 : 40,
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1D35),
                   borderRadius: BorderRadius.circular(9999),
                   boxShadow:
-                      _isListening
+                      _isRecording
                           ? [
                             BoxShadow(
                               color: Colors.blue.withOpacity(0.5),
@@ -1093,7 +1093,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     'imgs/input_mic_icon.svg',
                     width: 20,
                     height: 20,
-                    color: _isListening ? Colors.blue : null,
+                    color: _isRecording ? Colors.blue : null,
                   ),
                 ),
               ),
@@ -1504,7 +1504,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _startListening() async {
+  // 替换原有语音识别逻辑
+  Future<void> _startRecording() async {
     var status = await Permission.microphone.status;
     if (status.isDenied || status.isRestricted) {
       status = await Permission.microphone.request();
@@ -1513,58 +1514,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       Get.snackbar('权限提示', '请在系统设置中授予麦克风权限');
       return;
     }
-    bool available = await _speech.initialize(
-      onStatus: (val) {
-        if (val == 'done' || val == 'notListening') {
-          setState(() {
-            _isListening = false;
-          });
-        }
-      },
-      onError: (val) {
-        print('语音识别错误: code=${val.errorMsg}, details=${val.permanent}');
-        setState(() {
-          _isListening = false;
-        });
-        Get.snackbar('语音识别错误', val.errorMsg ?? '未知错误');
-      },
-    );
-    if (available) {
-      if (await Vibration.hasVibrator() ?? false) {
-        Vibration.vibrate(duration: 50);
-      }
-      setState(() {
-        _isListening = true;
-        _voiceInput = '';
-      });
-      _speech.listen(
-        onResult: (val) {
-          print('语音识别结果: ${val.recognizedWords}, isFinal: ${val.finalResult}');
-          setState(() {
-            _voiceInput = val.recognizedWords;
-            _messageController.text = _voiceInput;
-            _messageController.selection = TextSelection.fromPosition(
-              TextPosition(offset: _messageController.text.length),
-            );
-          });
-        },
-        localeId: 'zh-CN', // 优先用中文普通话
-      );
-    } else {
-      Get.snackbar('提示', '语音识别不可用');
-    }
+    setState(() {
+      _isRecording = true;
+    });
+    _audioFilePath = await _voiceInputService.startRecording();
   }
 
-  void _stopListening({bool cancel = false}) {
-    if (_isListening) {
-      if (cancel) {
-        _speech.cancel();
-      } else {
-        _speech.stop();
-      }
+  Future<void> _stopRecordingAndRecognize({bool cancel = false}) async {
+    if (!_isRecording) return;
+    setState(() {
+      _isRecording = false;
+    });
+    final filePath = await _voiceInputService.stopRecording();
+    if (cancel || filePath == null) return;
+    // 上传音频并识别
+    Get.snackbar('提示', '正在识别语音...');
+    final text = await _voiceInputService.uploadAudioAndGetText(
+      filePath: filePath,
+      apiUrl: 'http://dify.explorex-ai.com/v1/audio-to-text',
+      apiKey: 'app-f8LfFNPYtORijWvHPjqBYhtA',
+    );
+    if (text != null && text.isNotEmpty) {
       setState(() {
-        _isListening = false;
+        _messageController.text = text;
+        _messageController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _messageController.text.length),
+        );
       });
+      Get.snackbar('识别成功', text);
+    } else {
+      Get.snackbar('识别失败', '未能识别到有效语音');
     }
   }
 }
