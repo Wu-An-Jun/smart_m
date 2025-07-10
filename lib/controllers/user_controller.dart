@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../repositories/user_repository.dart';
 import '../data/user_local_data_source.dart';
 import '../data/user_remote_data_source.dart';
+import '../states/user_state.dart'; // Added import for UserState
 
 /// 用户控制器，管理登录状态
 class UserController extends GetxController {
@@ -37,6 +38,18 @@ class UserController extends GetxController {
     if (user != null) {
       _user.value = user;
       await repository.saveUser(user);
+      // 新增：同步到全局 UserState
+      final userState = Get.isRegistered<UserState>() ? Get.find<UserState>() : null;
+      if (userState != null) {
+        userState.updateUserInfo({
+          'name': user.nickname,
+          'avatar': user.avatarUrl,
+          'phone': user.phone ?? '',
+          'email': user.email ?? '',
+          'level': 'VIP',
+          'joinDate': DateTime.now().toString().substring(0, 10),
+        });
+      }
       update();
       return true;
     }

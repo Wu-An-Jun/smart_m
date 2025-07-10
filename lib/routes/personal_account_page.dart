@@ -21,8 +21,14 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
   @override
   void initState() {
     super.initState();
-    _nameController.text = widget.userInfo['name'] ?? '';
-    _phoneController.text = widget.userInfo['phone'] ?? '';
+    final phone = widget.userInfo['phone'] ?? '';
+    final defaultName = (phone is String && phone.length >= 4)
+        ? '手机用户${phone.substring(phone.length - 4)}'
+        : '手机用户';
+    _nameController.text = widget.userInfo['name']?.isNotEmpty == true
+        ? widget.userInfo['name']
+        : defaultName;
+    _phoneController.text = phone;
     _emailController.text = widget.userInfo['email'] ?? '';
   }
 

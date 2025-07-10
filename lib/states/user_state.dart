@@ -11,12 +11,12 @@ class UserState extends ChangeNotifier {
 
   // 用户基本信息
   Map<String, dynamic> _userInfo = {
-    'name': ' Blue',
+    'name': '',
     'avatar': '',
-    'phone': '18866669999',
-    'email': 'user@example.com',
-    'level': 'VIP',
-    'joinDate': '2024-01-15',
+    'phone': '',
+    'email': '',
+    'level': '',
+    'joinDate': '',
   };
 
   // 登录状态
@@ -27,7 +27,15 @@ class UserState extends ChangeNotifier {
 
   // Getters
   Map<String, dynamic> get userInfo => Map.from(_userInfo);
-  String get userName => _userInfo['name'] ?? '';
+  String get userName {
+    final name = _userInfo['name'] ?? '';
+    if (name.isNotEmpty) return name;
+    final phone = _userInfo['phone'] ?? '';
+    if (phone is String && phone.length >= 4) {
+      return '手机用户${phone.substring(phone.length - 4)}';
+    }
+    return '手机用户';
+  }
   String get userAvatar => _userInfo['avatar'] ?? '';
   String get userPhone => _userInfo['phone'] ?? '';
   String get userEmail => _userInfo['email'] ?? '';
@@ -111,12 +119,12 @@ class UserState extends ChangeNotifier {
   /// 重置状态
   void reset() {
     _userInfo = {
-      'name': ' Blue',
+      'name': '',
       'avatar': '',
-      'phone': '18866669999',
-      'email': 'user@example.com',
-      'level': 'VIP',
-      'joinDate': '2024-01-15',
+      'phone': '',
+      'email': '',
+      'level': '',
+      'joinDate': '',
     };
     _isLoggedIn = false;
     _isLoading = false;

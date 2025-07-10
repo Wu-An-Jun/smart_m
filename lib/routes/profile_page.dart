@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../common/Global.dart';
 import '../controllers/user_controller.dart';
+import '../states/user_state.dart';
+import '../states/state_manager.dart';
 import 'app_routes.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -59,19 +61,21 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Global.currentTheme.backgroundColor,
-      body:
-          _showHelpFaq
+    return StateConsumer<UserState>(
+      state: Global.userState,
+      builder: (context, userState) {
+        return Scaffold(
+          backgroundColor: Global.currentTheme.backgroundColor,
+          body: _showHelpFaq
               ? _buildHelpFaqWidget()
               : Column(
-                children: [
-                  // 顶部用户信息区域
-                  _buildUserInfoSection(),
-                  // 中间服务区域
-                  Expanded(child: _buildServicesSection()),
-                ],
-              ),
+                  children: [
+                    _buildUserInfoSection(),
+                    Expanded(child: _buildServicesSection()),
+                  ],
+                ),
+        );
+      },
     );
   }
 
@@ -110,7 +114,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            Global.userName.isNotEmpty ? Global.userName : '武安',
+                            Global.userName.isNotEmpty
+                                ? Global.userName
+                                : (Global.userInfo['phone'] != null && Global.userInfo['phone'].toString().length >= 4
+                                    ? '手机用户${Global.userInfo['phone'].toString().substring(Global.userInfo['phone'].toString().length - 4)}'
+                                    : '手机用户'),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -126,7 +134,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            '手机: 18866669999',
+                            '手机: ' + (Global.userInfo['phone'] ?? ''),
                             style: const TextStyle(
                               color: Color(0xFF6B7280),
                               fontFamily: 'Noto Sans',
@@ -842,10 +850,11 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                         ),
                         onTap: () async {
                           final controller = TextEditingController(
-                            text:
-                                Global.userName.isNotEmpty
-                                    ? Global.userName
-                                    : (_userInfo['name'] ?? ''),
+                            text: Global.userName.isNotEmpty
+                                ? Global.userName
+                                : (Global.userInfo['phone'] != null && Global.userInfo['phone'].toString().length >= 4
+                                    ? '手机用户${Global.userInfo['phone'].toString().substring(Global.userInfo['phone'].toString().length - 4)}'
+                                    : '手机用户'),
                           );
                           await showDialog(
                             context: context,

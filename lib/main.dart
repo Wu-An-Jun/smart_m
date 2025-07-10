@@ -7,6 +7,7 @@ import 'package:test_rec/controllers/user_controller.dart';
 import 'package:test_rec/controllers/permission_controller.dart';
 import 'package:test_rec/common/Global.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:test_rec/states/user_state.dart';
 
 void main() async {
   // 确保Flutter绑定初始化
@@ -26,6 +27,8 @@ void main() async {
 
 /// 初始化依赖
 void _initDependencies() {
+  // 注册UserState为全局单例，permanent: true保证不会被回收
+  Get.put<UserState>(UserState(), permanent: true);
   // 注册UserController为全局单例，permanent: true保证不会被回收
   Get.put<UserController>(UserController(), permanent: true);
   // 注册设备控制器为全局单例，permanent: true保证不会被回收

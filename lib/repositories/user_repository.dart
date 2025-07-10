@@ -31,6 +31,21 @@ class UserRepository {
 
   /// 登录（远程，成功后本地保存）
   Future<UserModel?> login(String username, String password) async {
+    // 允许两个测试手机号直接登录
+    const testPhones = ['18866668888', '18866667777'];
+    if (testPhones.contains(username)) {
+      final phoneSuffix = username.length >= 4 ? username.substring(username.length - 4) : username;
+      final testUser = UserModel(
+        userId: username,
+        nickname: '手机用户$phoneSuffix',
+        avatarUrl: '',
+        token: password,
+        email: null,
+        phone: username,
+      );
+      await saveUser(testUser);
+      return testUser;
+    }
     // 先尝试远程登录
     final user = await remoteDataSource.login(username, password);
     if (user != null) {
@@ -48,9 +63,10 @@ class UserRepository {
       }
     }
     // 本地无用户，自动注册
+    final phoneSuffix = username.length >= 4 ? username.substring(username.length - 4) : username;
     final newUser = UserModel(
       userId: username,
-      nickname: 'User_$username',
+      nickname: '手机用户$phoneSuffix',
       avatarUrl: '',
       token: password,
       email: null,
