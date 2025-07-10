@@ -7,7 +7,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+
 import 'package:vibration/vibration.dart';
 
 import '../common/Global.dart';
@@ -21,6 +21,7 @@ import 'app_routes.dart';
 import 'geofence_demo_page.dart';
 import '../states/notification_state.dart';
 import '../common/voice_input_service.dart';
+import '../test_voice_input_demo.dart';
 
 class ChatMessage {
   final String text;
@@ -162,6 +163,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _messageController.dispose();
     _focusNode.dispose();
     _devicePageController.dispose();
+    // 释放语音输入服务资源
+    _voiceInputService.dispose();
     super.dispose();
   }
 
@@ -1258,6 +1261,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Navigator.pop(context);
                   Get.snackbar('提示', '帮助功能开发中');
                 }),
+                // 新增：语音输入演示
+                _buildDrawerItem(Icons.mic, '语音输入演示', () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const VoiceInputDemoPage(),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -1504,7 +1517,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  // 替换原有语音识别逻辑
+  // 语音输入功能 - 使用新的Dify API
   Future<void> _startRecording() async {
     var status = await Permission.microphone.status;
     if (status.isDenied || status.isRestricted) {
@@ -1514,36 +1527,90 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       Get.snackbar('权限提示', '请在系统设置中授予麦克风权限');
       return;
     }
+    
     setState(() {
       _isRecording = true;
     });
+    
+    // 启动震动反馈
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 50);
+    }
+    
     _audioFilePath = await _voiceInputService.startRecording();
+    if (_audioFilePath == null) {
+      setState(() {
+        _isRecording = false;
+      });
+      Get.snackbar('错误', '无法开始录音，请检查设备权限');
+    }
   }
 
   Future<void> _stopRecordingAndRecognize({bool cancel = false}) async {
     if (!_isRecording) return;
+    
     setState(() {
       _isRecording = false;
     });
+    
+    // 停止震动反馈
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 30);
+    }
+    
     final filePath = await _voiceInputService.stopRecording();
-    if (cancel || filePath == null) return;
-    // 上传音频并识别
-    Get.snackbar('提示', '正在识别语音...');
-    final text = await _voiceInputService.uploadAudioAndGetText(
-      filePath: filePath,
-      apiUrl: 'http://dify.explorex-ai.com/v1/audio-to-text',
-      apiKey: 'app-f8LfFNPYtORijWvHPjqBYhtA',
+    if (cancel || filePath == null) {
+      if (filePath == null) {
+        Get.snackbar('错误', '录音失败，请重试');
+      }
+      return;
+    }
+    
+    // 显示识别中的提示
+    Get.snackbar(
+      '语音识别', 
+      '正在识别语音内容...',
+      backgroundColor: Global.currentTheme.primaryColor.withOpacity(0.8),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+      showProgressIndicator: true,
     );
-    if (text != null && text.isNotEmpty) {
-      setState(() {
-        _messageController.text = text;
-        _messageController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _messageController.text.length),
+    
+    try {
+      // 使用新的语音转文字API
+      final text = await _voiceInputService.uploadAndTranscribe(filePath);
+      
+      if (text != null && text.trim().isNotEmpty) {
+        // 直接发送给AI
+        _sendMessage(text.trim());
+        Get.snackbar(
+          '识别成功', 
+          '识别内容已自动发送：$text',
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
         );
-      });
-      Get.snackbar('识别成功', text);
-    } else {
-      Get.snackbar('识别失败', '未能识别到有效语音');
+      } else {
+        Get.snackbar(
+          '识别失败', 
+          '未能识别到有效语音内容，请重试',
+          backgroundColor: Colors.orange.withOpacity(0.8),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      debugPrint('语音识别错误: $e');
+      Get.snackbar(
+        '识别错误', 
+        '语音识别服务异常，请稍后重试',
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } finally {
+      // 清理临时文件
+      _voiceInputService.cleanup();
     }
   }
 }
