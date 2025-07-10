@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'dart:math';
+import 'package:url_launcher/url_launcher.dart';
+import '../widgets/faq_related_questions.dart';
 
 class FaqHelpLocationPage extends StatefulWidget {
   const FaqHelpLocationPage({Key? key}) : super(key: key);
@@ -10,6 +13,62 @@ class FaqHelpLocationPage extends StatefulWidget {
 
 class _FaqHelpLocationPageState extends State<FaqHelpLocationPage> {
   bool? isResolved;
+
+  // FAQ问题列表
+  static const List<Map<String, String>> allFaqs = [
+    {'title': '无法添加设备，怎么办？', 'route': '/faq-help-add-device'},
+    {'title': '不小心删除了设备应该怎么添加回来？', 'route': '/faq-help-deleted-device'},
+    {'title': 'wifi无法连接成功是什么原因？', 'route': '/faq-help-wifi'},
+    {'title': '如何更新设备固件？', 'route': '/faq-help-firmware'},
+    {'title': '设备定位不准确怎么解决？', 'route': '/faq-help-location'},
+  ];
+
+  List<Map<String, String>> getRelatedFaqs() {
+    final currentRoute = '/faq-help-location';
+    final others = allFaqs.where((f) => f['route'] != currentRoute).toList();
+    others.shuffle(Random());
+    return others.take(2).toList();
+  }
+
+  void _showCustomerServiceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('人工客服电话', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+          content: const Text('18866668888', style: TextStyle(fontSize: 18, color: Colors.black)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭', style: TextStyle(color: Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                const phone = '18866668888';
+                final uri = Uri(scheme: 'tel', path: phone);
+                try {
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('当前设备不支持拨号功能或未授权')),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('拨号失败: \\${e.toString()}')),
+                  );
+                }
+              },
+              child: const Text('拨打电话', style: TextStyle(color: Color(0xFF3B82F6))),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,22 +280,19 @@ class _FaqHelpLocationPageState extends State<FaqHelpLocationPage> {
                     color: const Color(0xFF3B82F6),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () {},
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Center(
-                          child: Text(
-                            '联系人工客服',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                              height: 1.5,
-                            ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: _showCustomerServiceDialog,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: Text(
+                          '联系人工客服',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -245,6 +301,8 @@ class _FaqHelpLocationPageState extends State<FaqHelpLocationPage> {
                 ),
               ),
               const SizedBox(height: 36),
+              // 相关问题
+              const FaqRelatedQuestions(currentRoute: '/faq-help-location'),
             ],
           ),
         ),
@@ -307,6 +365,25 @@ class _FaqStepItem extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+}
+
+class _FaqRelatedItem extends StatelessWidget {
+  final String title;
+  const _FaqRelatedItem(this.title);
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Color(0xFF3B82F6),
+          fontSize: 14,
+          height: 1.5,
+        ),
       ),
     );
   }
