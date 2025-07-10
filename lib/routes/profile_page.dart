@@ -902,14 +902,14 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                                       ),
                                       Container(
                                         margin: const EdgeInsets.only(
-                                          top: 16,
+                                          top: 8,
                                           right: 4,
                                         ),
                                         padding: const EdgeInsets.fromLTRB(
-                                          16,
+                                          8,
+                                          0,
                                           12,
-                                          12,
-                                          12,
+                                          0,
                                         ),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF3F4F6),
@@ -926,6 +926,10 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                                                     const InputDecoration(
                                                       hintText: '请输入新昵称',
                                                       border: InputBorder.none,
+                                                      focusedBorder:
+                                                          InputBorder.none,
+                                                      enabledBorder:
+                                                          InputBorder.none,
                                                       counterText: '',
                                                     ),
                                                 maxLength: 30,
@@ -949,6 +953,7 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                                                 child: Center(
                                                   child: SvgPicture.asset(
                                                     'imgs/clear_input.svg',
+                                                    color: Colors.white,
                                                     width: 12,
                                                     height: 12,
                                                   ),
@@ -990,7 +995,7 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                                         },
                                         child: Container(
                                           margin: const EdgeInsets.only(
-                                            top: 16,
+                                            top: 8,
                                             right: 4,
                                           ),
                                           padding: const EdgeInsets.symmetric(
@@ -1066,7 +1071,7 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 0),
         child: Row(
           children: [
             SizedBox(
@@ -1107,7 +1112,7 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, color: Color(0xFFE5E7EB)),
                 ListTile(
                   leading: const Icon(
                     Icons.photo_camera,
@@ -1119,7 +1124,7 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
                     _pickAvatar(ImageSource.camera);
                   },
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, color: Color(0xFFE5E7EB)),
                 ListTile(
                   leading: const Icon(
                     Icons.photo_library,
