@@ -16,6 +16,7 @@ import '../widgets/geofence_map_widget.dart';
 import '../widgets/more_settings_dialog.dart';
 import '../widgets/positioning_mode_selector.dart';
 import '../widgets/delete_confirmation_dialog.dart';
+import '../states/notification_state.dart';
 
 class DeviceManagementPage extends StatefulWidget {
   const DeviceManagementPage({super.key});
@@ -442,18 +443,27 @@ class _DeviceManagementPageState extends State<DeviceManagementPage> {
                         size: 24,
                       ),
                     ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
+                    // 只有有未读通知时才显示红点
+                    Obx(() {
+                      final notificationState = Get.isRegistered<NotificationState>()
+                          ? Get.find<NotificationState>()
+                          : Get.put(NotificationState());
+                      final hasUnread = notificationState.hasUnread;
+                      return hasUnread
+                          ? Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink();
+                    }),
                   ],
                 ),
               ),

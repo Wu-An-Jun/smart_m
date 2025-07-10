@@ -19,6 +19,7 @@ import '../models/device_model.dart';
 import '../widgets/geofence_map_card.dart';
 import 'app_routes.dart';
 import 'geofence_demo_page.dart';
+import '../states/notification_state.dart';
 
 class ChatMessage {
   final String text;
@@ -1227,6 +1228,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _buildDrawerItem(Icons.chat_bubble_outline, 'AI聊天历史', () {
                   Navigator.pop(context);
                   Get.toNamed(AppRoutes.aiChatHistory);
+                }),
+                // 新增生成测试通知数据按钮
+                _buildDrawerItem(Icons.notifications_active, '生成测试通知数据', () {
+                  Navigator.pop(context);
+                  final notificationState = Get.isRegistered<NotificationState>()
+                      ? Get.find<NotificationState>()
+                      : Get.put(NotificationState());
+                  notificationState.generateTestNotifications();
+                  Get.snackbar('提示', '已生成测试通知数据');
                 }),
                 _buildDrawerItem(Icons.data_usage, '生成测试数据', () {
                   Navigator.pop(context);

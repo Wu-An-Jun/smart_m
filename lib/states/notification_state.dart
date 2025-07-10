@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/notification_model.dart';
+import '../repositories/notification_repository.dart';
 
 class NotificationState extends GetxController {
   final RxList<NotificationModel> _notifications = <NotificationModel>[].obs;
   final Rx<NotificationModel?> _selectedNotification = Rx<NotificationModel?>(null);
+  final NotificationRepository _repository = NotificationRepository();
 
   List<NotificationModel> get notifications => _notifications;
   NotificationModel? get selectedNotification => _selectedNotification.value;
@@ -14,6 +16,15 @@ class NotificationState extends GetxController {
   void onInit() {
     super.onInit();
     _initializeNotifications();
+    _loadReadStatus();
+  }
+
+  Future<void> _loadReadStatus() async {
+    final readIds = await _repository.getReadIds();
+    for (var n in _notifications) {
+      n.read = readIds.contains(n.id);
+    }
+    _notifications.refresh();
   }
 
   void _initializeNotifications() {
@@ -80,6 +91,7 @@ class NotificationState extends GetxController {
     if (index != -1) {
       _notifications[index].read = true;
       _notifications.refresh();
+      _saveReadStatus();
     }
   }
 
@@ -88,6 +100,35 @@ class NotificationState extends GetxController {
       notification.read = true;
     }
     _notifications.refresh();
+    _saveReadStatus();
+  }
+
+  Future<void> _saveReadStatus() async {
+    final readIds = _notifications.where((n) => n.read).map((n) => n.id).toList();
+    await _repository.saveReadIds(readIds);
+  }
+
+  /// 生成测试通知数据
+  void generateTestNotifications() {
+    final now = DateTime.now();
+    final testList = List.generate(5, (i) => NotificationModel(
+      id: now.millisecondsSinceEpoch + i,
+      type: "test",
+      title: "测试通知${i + 1}",
+      message: "这是一条测试通知消息 ${i + 1}",
+      date: now.toString().substring(0, 10),
+      time: now.toString().substring(11, 19),
+      read: false,
+      details: NotificationDetails(
+        speed: "0 km/h",
+        fullDate: now.toString(),
+        address: "测试地址${i + 1}",
+        mapUrl: "https://maps.example.com/test${i + 1}",
+      ),
+    ));
+    _notifications.insertAll(0, testList);
+    _notifications.refresh();
+    _saveReadStatus();
   }
 
   // 清空所有通知，便于开发测试无通知页面
