@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../common/Global.dart';
 import '../controllers/user_controller.dart';
@@ -703,7 +704,7 @@ class _ProfilePageState extends State<ProfilePage> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: () {},
+                onTap: _showCustomerServiceDialog, // 修改为弹窗
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Center(
@@ -761,6 +762,49 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
+    );
+  }
+
+  // 显示人工客服电话弹窗
+  void _showCustomerServiceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white, // 白底弹窗
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('人工客服电话', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+          content: const Text('18866668888', style: TextStyle(fontSize: 18, color: Colors.black)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('关闭', style: TextStyle(color: Colors.black)),
+            ),
+            TextButton(
+              onPressed: () async {
+                const phone = '18866668888';
+                final uri = Uri(scheme: 'tel', path: phone);
+                try {
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    // ignore: use_build_context_synchronously
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('当前设备不支持拨号功能或未授权')),
+                    );
+                  }
+                } catch (e) {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('拨号失败: ${e.toString()}')),
+                  );
+                }
+              },
+              child: const Text('拨打电话', style: TextStyle(color: Color(0xFF3B82F6))),
+            ),
+          ],
+        );
+      },
     );
   }
 }
