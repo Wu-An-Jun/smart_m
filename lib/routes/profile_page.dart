@@ -1126,13 +1126,18 @@ class _PersonalAccountPageState extends State<PersonalAccountPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
           children: [
             SizedBox(
               width: 60,
               height: 40,
-              child: Text(
-                title,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              child: Align(
+                alignment: Alignment.centerLeft, // 靠左垂直居中
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                  textAlign: TextAlign.left, // 左对齐
+                ),
               ),
             ),
             Expanded(
