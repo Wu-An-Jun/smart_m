@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../common/Global.dart';
 import '../models/notification_model.dart';
 import '../states/notification_state.dart';
+import '../widgets/amap_widget.dart'; // Added import for AmapWidget
 
 class NotificationPage extends StatelessWidget {
   final NotificationState notificationState = Get.put(NotificationState());
@@ -332,6 +333,17 @@ class NotificationPage extends StatelessWidget {
   Widget _buildNotificationDetail(NotificationModel notification) {
     final details = notification.details!;
 
+    // 解析经纬度
+    double latitude = 39.909613; // 默认北京
+    double longitude = 116.397827;
+    final mapUrl = details.mapUrl;
+    final centerReg = RegExp(r'center=([\d.\-]+),([\d.\-]+)');
+    final match = centerReg.firstMatch(mapUrl);
+    if (match != null && match.groupCount == 2) {
+      latitude = double.tryParse(match.group(1) ?? '') ?? latitude;
+      longitude = double.tryParse(match.group(2) ?? '') ?? longitude;
+    }
+
     return Container(
       color: const Color(0xFFF7F5FA),
       child: Column(
@@ -341,13 +353,21 @@ class NotificationPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
+                  // 自定义地图组件
+                  AmapWidget(
+                    latitude: latitude,
+                    longitude: longitude,
+                    zoomLevel: 16,
+                    showMarker: true,
+                    markerLabel: details.address,
+                    height: 300,
                     width: double.infinity,
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: Center(
-                      child: Icon(Icons.map, size: 64, color: Colors.grey[400]),
-                    ),
+                    polygonPath: [
+                      [116.397428, 39.90923],
+                      [116.397428, 39.91923],
+                      [116.407428, 39.91923],
+                      [116.407428, 39.90923],
+                    ],
                   ),
                   Container(
                     decoration: BoxDecoration(
