@@ -59,7 +59,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final ChatHistoryService _chatHistoryService = ChatHistoryService.instance;
   String? _currentSessionId;
   bool _isTyping = false;
-  bool _autoScrollEnabled = true;
+  bool _autoScrollEnabled = true; // 是否自动滚动到底部
+  StreamSubscription<String>? _aiStreamSubscription; // AI流式输出订阅
+  bool _isAIStreaming = false; // 是否AI正在流式输出
 
   // 设备展示状态
   bool _showDeviceSection = false;
@@ -153,6 +155,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
       }
     });
+
+    // 监听聊天滚动，用户上滑时关闭自动滚动
+    _scrollController.addListener(() {
+      // 如果用户滚动到不是底部，关闭自动滚动
+      if (_scrollController.hasClients &&
+          _scrollController.position.pixels <
+              _scrollController.position.maxScrollExtent - 20) {
+        if (_autoScrollEnabled) {
+          setState(() {
+            _autoScrollEnabled = false;
+          });
+        }
+      }
+      // 如果用户滑动回到底部，重新开启自动滚动
+      if (_scrollController.hasClients &&
+          (_scrollController.position.pixels >=
+              _scrollController.position.maxScrollExtent - 2)) {
+        if (!_autoScrollEnabled) {
+          setState(() {
+            _autoScrollEnabled = true;
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -165,6 +191,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _devicePageController.dispose();
     // 释放语音输入服务资源
     _voiceInputService.dispose();
+    _aiStreamSubscription?.cancel(); // 释放AI流式订阅
     super.dispose();
   }
 
@@ -813,12 +840,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             )
             .toList()),
-
-        // 显示正在输入状态
-        if (_isTyping)
+        // 显示正在输入状态和暂停按钮
+        if (_isTyping || _isAIStreaming)
           Container(
             margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
-            child: _buildWeChatTypingIndicator(),
+            child: Row(
+              children: [
+                _buildWeChatTypingIndicator(),
+                if (_isAIStreaming)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: ElevatedButton.icon(
+                      onPressed: _pauseAIResponse,
+                      icon: const Icon(Icons.pause, size: 16),
+                      label: const Text('暂停AI对话'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF64748B),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        textStyle: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
 
         // 快速回复按钮区域
@@ -1361,43 +1406,51 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _sendMessage(String text) {
     if (text.trim().isEmpty) return;
-
+    // 发送新消息时，取消上一次AI流式输出
+    _pauseAIResponse();
     setState(() {
       _messages.add(ChatMessage(text: text.trim(), isUser: true));
       _messageController.clear();
       _isTyping = true;
       _autoScrollEnabled = true;
-      _hasAutoNavigated = false; // 每次新消息重置自动跳转标记
+      _hasAutoNavigated = false;
     });
-
-    // 保存用户消息到历史记录
     _saveChatMessage(text.trim(), true);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottomSmooth();
     });
-
     _simulateAIResponse(text.trim());
+  }
+
+  // 暂停AI流式输出
+  void _pauseAIResponse() {
+    _aiStreamSubscription?.cancel();
+    _aiStreamSubscription = null;
+    if (_isAIStreaming) {
+      setState(() {
+        _isAIStreaming = false;
+        _isTyping = false;
+      });
+    }
   }
 
   void _simulateAIResponse(String userMessage) {
     final aiMessageIndex = _messages.length;
     setState(() {
       _messages.add(ChatMessage(text: '', isUser: false));
+      _isAIStreaming = true;
     });
-
-    _aiService
+    _aiStreamSubscription = _aiService
         .sendMessageStream(userMessage)
         .listen(
           (fullText) {
             if (mounted) {
               setState(() {
                 _isTyping = false;
-
+                _isAIStreaming = true;
                 AINavigationResponse? navigationInfo = _parseNavigationResponse(
                   fullText,
                 );
-
                 if (aiMessageIndex < _messages.length) {
                   _messages[aiMessageIndex] = ChatMessage(
                     text:
@@ -1409,7 +1462,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   );
                 }
               });
-
               if (_autoScrollEnabled) {
                 _scrollToBottomSmooth();
               }
@@ -1419,9 +1471,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             if (mounted) {
               setState(() {
                 _isTyping = false;
+                _isAIStreaming = false;
                 if (aiMessageIndex < _messages.length) {
                   _messages[aiMessageIndex] = ChatMessage(
-                    text: '抱歉，AI服务暂时不可用：${error.toString()}',
+                    text: '抱歉，AI服务暂时不可用： ${error.toString()}',
                     isUser: false,
                   );
                 }
@@ -1432,8 +1485,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             if (mounted) {
               setState(() {
                 _isTyping = false;
+                _isAIStreaming = false;
               });
-
               // 保存AI响应到历史记录
               if (aiMessageIndex < _messages.length) {
                 final aiMessage = _messages[aiMessageIndex];
@@ -1452,7 +1505,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   navigationJson: navigationJson,
                 );
               }
-
               if (_autoScrollEnabled) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (_scrollController.hasClients) {

@@ -570,6 +570,7 @@ class _ProfilePageState extends State<ProfilePage> {
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
+          color: Colors.white, // 设置白色背景
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,

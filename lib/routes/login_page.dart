@@ -280,8 +280,8 @@ class _LoginPageState extends State<LoginPage> {
                 borderSide: BorderSide.none,
               ),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8, // 减小垂直内边距以降低整体高度
+                horizontal: 12, // 更小的水平内边距
+                vertical: 6, // 更小的垂直内边距
               ),
               suffixIcon: ElevatedButton(
                 onPressed: _isButtonDisabled ? null : _sendVerificationCode,
@@ -291,13 +291,14 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 2, // 进一步减小垂直内边距以匹配输入框高度
+                    horizontal: 8, // 更小的水平内边距
+                    vertical: 0, // 更小的垂直内边距
                   ),
+                  minimumSize: const Size(60, 28), // 更小的按钮尺寸
                 ),
                 child: Text(
                   _isButtonDisabled ? '$_countdown秒后重发' : '发送验证码',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
                 ),
               ),
             ),
@@ -308,19 +309,22 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLoginButton() {
-    return ElevatedButton(
-      onPressed: _login,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xff6a4dff),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      child: const Text(
-        '登录',
-        style: TextStyle(
-          fontSize: 18,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+    return SizedBox(
+      height: 38, // 更小的高度
+      child: ElevatedButton(
+        onPressed: _login,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xff6a4dff),
+          padding: const EdgeInsets.symmetric(vertical: 0), // 去除多余内边距
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: const Text(
+          '登录',
+          style: TextStyle(
+            fontSize: 15, // 更小的字体
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
